@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'rest_framework',
+    'rest_framework.authtoken',
     'api',
 )
 
@@ -92,3 +93,12 @@ USE_TZ = True
 STATIC_URL =  os.environ.get('MEMEX_API_STATIC_URL', '/static/')
 
 TEMPLATE_DIRS = os.environ.get('MEMEX_API_TEMPLATE_DIRS', '').split(',')
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
