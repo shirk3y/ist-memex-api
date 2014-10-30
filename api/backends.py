@@ -18,9 +18,12 @@ class ModelBackend(AbstractBackend):
         obj = Log.objects.get(key=key)
         return obj.data
     def put(self, key, data):
-        obj = Log.objects.create(key=key, data=data)
+        obj,new = Log.objects.get_or_create(key=key)
+        obj.data = data
+        obj.save()
         return obj.data
     def scan(self, prefix=None, start=None, stop=None, limit=None):
         raise NotImplementedError
     def index(self, key):
-        raise NotImplementedError
+        obj = Index.objects.get_or_create(key=key)
+        return obj.key

@@ -15,7 +15,7 @@ class GenericRecordBroker():
 
     def save(self, key, doc):
         self.validate(doc)
-        return self.backend.put(key, self.serialize(doc))
+        return self.deserialize(self.backend.put(key, self.serialize(doc)))
 
     def validate(self, doc):
         raise NotImplementedError
@@ -24,7 +24,7 @@ class GenericRecordBroker():
         return zlib.compress(cbor.dumps(doc))
 
     def deserialize(self, data):
-        return zlib.decompress(cbor.loads(data))
+        return cbor.loads(zlib.decompress(data))
 
     def search(self, index, value=None, prefix=None, start=None, end=None, limit=None):
         if value is not None:
