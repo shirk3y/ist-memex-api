@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view
 
 import json
 import settings
+from models import LogManager
 
 @api_view(['GET'])
 def index(request):
@@ -14,13 +15,13 @@ def index(request):
     return Response(response)
 
 def debug(request):
-    response = {
-    }
+    response = { }
+    manager = log_manager()
     return HttpResponse(json.dumps(response, indent=2), content_type="application/json")
 
 class LogList(APIView):
     def get(self, request, format=None):
-        response = {'type':'GET'}
+        response = { }
         return Response(response)
     def post(self, request, format=None):
         response = {'type':'POST'}
@@ -28,7 +29,8 @@ class LogList(APIView):
         
 class LogItem(APIView):
     def get(self, request, key, format=None):
-        response = {'type':'GET'}
+        manager = log_manager()
+        response = manager.get(key)
         return Response(response)
     def put(self, request, key, format=None):
         response = {'type':'PUT'}
@@ -42,5 +44,11 @@ class LogItem(APIView):
 
 class LogSearch(APIView):
     def get(self, request, index, value=None, prefix=None, start=None, end=None, format=None):
-        response = {'type':'GET'}
+        limit = request.QUERY_PARAMS.get('limit', 1000)
+        manager = log_manager()
+        response = manager.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit)
         return Response(response)
+
+def log_manager():
+    return LogManager(settings.API_LOG_MANAGER_BACKEND)
+
