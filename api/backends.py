@@ -12,4 +12,5 @@ class HbaseBackend(AbstractBackend):
     pass
 
 class MysqlBackend(AbstractBackend):
-    pass
+    def get(self, key):
+        return { 'key': key }

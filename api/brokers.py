@@ -1,7 +1,7 @@
 import sys
 import settings
 
-class LogManager():
+class GenericRecordBroker():
     def __init__(self, backend_class):
         self.backend = self.instantiate_backend(backend_class)
 
@@ -14,7 +14,7 @@ class LogManager():
         return self.backend.put(doc['key'], self.serialize(doc))
 
     def validate(self, doc):
-        return True
+        raise NotImplementedError
 
     def serialize(self, doc):
         return doc
@@ -47,3 +47,6 @@ class LogManager():
         class_name = settings.API_LOG_MANAGER_BACKEND.split('.')[-1]
         class_obj = getattr(module_obj, class_name)
         return class_obj()
+
+class LogBroker(GenericRecordBroker):
+    pass
