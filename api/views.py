@@ -14,6 +14,5 @@ def index(request):
 
 def debug(request):
     response = {
-        'auth': request.META['HTTP_AUTHORIZATION']
     }
     return HttpResponse(json.dumps(response, indent=2), content_type="application/json")
