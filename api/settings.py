@@ -103,4 +103,4 @@ REST_FRAMEWORK = {
     ),
 }
 
-API_LOG_MANAGER_BACKEND = os.environ.get('MEMEX_API_LOG_MANAGER_BACKEND', 'api.backends.MysqlBackend')
+API_LOG_MANAGER_BACKEND = os.environ.get('MEMEX_API_LOG_MANAGER_BACKEND', 'api.backends.ModelBackend')

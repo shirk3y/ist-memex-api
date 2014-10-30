@@ -1,4 +1,8 @@
 import sys
+import cbor
+import zlib
+import happybase
+
 import settings
 
 class GenericRecordBroker():
@@ -9,18 +13,18 @@ class GenericRecordBroker():
         data = self.backend.get(key)
         return self.deserialize(data)
 
-    def save(self, doc):
+    def save(self, key, doc):
         self.validate(doc)
-        return self.backend.put(doc['key'], self.serialize(doc))
+        return self.backend.put(key, self.serialize(doc))
 
     def validate(self, doc):
         raise NotImplementedError
 
     def serialize(self, doc):
-        return doc
+        return zlib.compress(cbor.dumps(doc))
 
     def deserialize(self, data):
-        return data
+        return zlib.decompress(cbor.loads(data))
 
     def search(self, index, value=None, prefix=None, start=None, end=None, limit=None):
         if value is not None:
@@ -49,4 +53,5 @@ class GenericRecordBroker():
         return class_obj()
 
 class LogBroker(GenericRecordBroker):
-    pass
+    def validate(self, doc):
+        return True
