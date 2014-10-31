@@ -46,6 +46,7 @@ class LogItem(APIView):
 class LogSearch(APIView):
     def get(self, request, index, value=None, prefix=None, start=None, end=None, format=None):
         limit = request.QUERY_PARAMS.get('limit', 1000)
+        expand = bool(request.QUERY_PARAMS.get('expand', False))
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
-        response = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit)
+        response = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit, expand=expand)
         return Response(response)

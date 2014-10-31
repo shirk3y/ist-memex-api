@@ -20,7 +20,7 @@ class GenericRecordBroker():
 
     def save(self, doc, key = None):
         doc, key = self.validate(doc, key)
-        return self.deserialize(self.backend.put(key, self.serialize(doc)))
+        return self.deserialize(self.backend.put(key, self.serialize(doc), doc['indices']))
 
     def validate(self, doc, key = None):
         raise NotImplementedError
@@ -31,23 +31,30 @@ class GenericRecordBroker():
     def deserialize(self, data):
         return cbor.loads(zlib.decompress(data))
 
-    def search(self, index, value=None, prefix=None, start=None, end=None, limit=None):
+    def search(self, index, value=None, prefix=None, start=None, end=None, limit=None, expand=False):
+        results = []
         if value is not None:
             self.validate_index(index, value)
             key = "{index}__{value}__".format(index=index, value=value)
-            return self.backend.scan(prefix=key, limit=limit)
+            results = self.backend.scan(prefix=key, limit=limit, expand=expand)
         elif prefix is not None:
             self.validate_index(index, prefix)
             key = "{index}__{value}".format(index=index, value=prefix)
-            return self.backend.scan(prefix=key, limit=limit)
+            results = self.backend.scan(prefix=key, limit=limit, expand=expand)
         elif start is not None and end is not None:
             self.validate_index(index, start)
             self.validate_index(index, end)
             start_key = "{index}__{value}".format(index=index, value=start)
             end_key = "{index}__{value}".format(index=index, value=end)
-            return self.backend.scan(start=start_key, stop=stop_key, limit=limit)
+            results = self.backend.scan(start=start_key, stop=stop_key, limit=limit, expand=expand)
         else:
             pass #TODO: bad request
+        if expand:
+            _results = []
+            for result in results:
+                _results.append(self.get(result))
+            results = _results
+        return results
 
     def validate_index(self, key, value):
         if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{1,48}').match(key)):
@@ -64,6 +71,13 @@ class GenericRecordBroker():
         return class_obj()
 
 class LogBroker(GenericRecordBroker):
+
+    def get(self, key):
+        data = self.backend.get(key)
+        doc = self.deserialize(data)
+        doc = self.strip_indices(doc)
+        return doc
+
     def validate(self, doc, key = None):
         doc, key = self.validate_key(doc, key)
         doc = self.validate__tree(doc)
@@ -119,7 +133,7 @@ class LogBroker(GenericRecordBroker):
         _end = _section.get('endedAt')
         if not _start:
             if not _end:
-                _section['startedAt'] = int(time.time() * 1000)
+                _start = int(time.time() * 1000)
             else:
                 raise ValidationError("Schema error: 'time.startedAt' is missing")
         if _start:
@@ -193,7 +207,7 @@ class LogBroker(GenericRecordBroker):
         for key in required_children:
             if not key in _section or not _section[key]:
                 raise ValidationError("Schema error: 'component.{key}' is required".format(key=key))
-        self.add_index(doc, 'component.name', '{name} {version}'.format(name=_section['name'], version=_section['version']).strip())
+        self.add_index(doc, 'component.name', '{name}_{version}'.format(name=_section['name'], version=_section['version']).strip())
         return doc
 
     def validate_acl(self, doc):
@@ -231,3 +245,12 @@ class LogBroker(GenericRecordBroker):
             doc['indices'].append({'key':key, 'value':value})
         except ValidationError:
             pass
+
+    def strip_indices(self, doc):
+        internal_indices = ('time.startedAt', 'time.endedAt', 'action.workflow', 'action.activity', 'client.sessionId', 'client.userId', 'client.ipAddress', 'component.name')
+        indices = doc.get('indices')
+        doc['indices'] = []
+        for entry in indices:
+            if not entry['key'] in internal_indices:
+                doc['indices'].append(entry)
+        return doc
