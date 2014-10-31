@@ -23,7 +23,8 @@ class LogList(APIView):
         response = { }
         return Response(response)
     def post(self, request, format=None):
-        response = {'type':'POST'}
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.save(request.DATA)
         return Response(response)
         
 class LogItem(APIView):
@@ -33,7 +34,7 @@ class LogItem(APIView):
         return Response(response)
     def put(self, request, key, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
-        response = broker.save(key, request.DATA)
+        response = broker.save(request.DATA, key)
         return Response(response)
 #    def patch(self, request, key, format=None):
 #        response = {'type':'PATCH'}

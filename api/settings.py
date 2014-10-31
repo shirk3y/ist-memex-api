@@ -25,7 +25,7 @@ SECRET_KEY = 'xpje7*g@ok-fj!9-(%2d=q8bx31o5e#y%%q*8sktccosqp8p%k'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (os.environ.get('MEMEX_API_DEBUG', 'True') == 'True')
 
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = os.environ.get('MEMEX_API_ALLOWED_HOSTS', '').split(',')
 
@@ -101,6 +101,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
     ),
 }
 
