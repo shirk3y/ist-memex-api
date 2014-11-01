@@ -31,6 +31,10 @@ class ModelBackend(AbstractBackend):
             for obj in Index.objects.filter(key__startswith=prefix):
                 key = obj.key.split("__")[-1]
                 keys.append(key)
+        elif start and stop:
+            for obj in Index.objects.filter(key__gte=start, key__lte=stop):    
+                key = obj.key.split("__")[-1]
+                keys.append(key)
         return keys
 
     def index(self, key):

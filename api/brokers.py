@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 
 import settings
 
-class GenericRecordBroker():
+class GenericRecordBroker(object):
     def __init__(self, backend_class):
         self.backend = self.instantiate_backend(backend_class)
 
@@ -45,7 +45,7 @@ class GenericRecordBroker():
             self.validate_index(index, start)
             self.validate_index(index, end)
             start_key = "{index}__{value}".format(index=index, value=start)
-            end_key = "{index}__{value}".format(index=index, value=end)
+            stop_key = "{index}__{value}".format(index=index, value=end)
             results = self.backend.scan(start=start_key, stop=stop_key, limit=limit, expand=expand)
         else:
             pass #TODO: bad request
@@ -59,7 +59,7 @@ class GenericRecordBroker():
     def validate_index(self, key, value):
         if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{1,48}').match(key)):
             raise ValidationError("Invalid index key '{key}'".format(key=key))
-        if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{1,160}').match(value)):
+        if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{0,160}').match(value)):
             raise ValidationError("Invalid index value '{value}'".format(value=value))
 
     def instantiate_backend(self, backend_class):
@@ -77,6 +77,25 @@ class LogBroker(GenericRecordBroker):
         doc = self.deserialize(data)
         doc = self.strip_indices(doc)
         return doc
+
+    def search(self, index, value=None, prefix=None, start=None, end=None, limit=None, expand=False):
+        if index in ('time.startedAt', 'time.endedAt'):
+            if value:
+                try:
+                    value = self.flip_timestamp(value)
+                except:
+                    pass
+            if prefix:
+                try:
+                    prefix = self.flip_timestamp(prefix)
+                except:
+                    pass
+            if start and end:
+                _end = self.flip_timestamp(start)
+                _start = self.flip_timestamp(end)
+                end = str(int(_end)+1)
+                start = _start
+        return GenericRecordBroker.search(self, index, value, prefix, start, end, limit, expand)
 
     def validate(self, doc, key = None):
         doc, key = self.validate_key(doc, key)

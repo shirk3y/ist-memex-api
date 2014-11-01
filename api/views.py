@@ -20,7 +20,10 @@ def debug(request):
 
 class LogList(APIView):
     def get(self, request, format=None):
-        response = { }
+        limit = request.QUERY_PARAMS.get('limit', 1000)
+        expand = bool(request.QUERY_PARAMS.get('expand', False))
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.search(index='time.startedAt',prefix='', limit=limit, expand=expand)
         return Response(response)
     def post(self, request, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
