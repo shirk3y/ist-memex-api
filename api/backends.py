@@ -1,5 +1,6 @@
 import happybase
 
+import settings
 from models import *
 
 class AbstractBackend:
@@ -7,24 +8,40 @@ class AbstractBackend:
         raise NotImplementedError
     def put(self, key, data, indices=[]):
         raise NotImplementedError
-    def scan(self, prefix=None, start=None, stop=None, limit=None):
+    def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
         raise NotImplementedError
     def index(self, key):
         raise NotImplementedError
 
-class HbaseBackend(AbstractBackend):
+class HbaseLogBackend(AbstractBackend):
     def __init__(self):
-        self.connection = happybase.Connection(host=settings.HBASE_HOST, port=settings.HBASE_PORT, table_prefix=settings.HBASE_TABLE_PREFIX)
+        self.connection = happybase.Connection(host=settings.HBASE_HOST, port=int(settings.HBASE_PORT), table_prefix=settings.HBASE_TABLE_PREFIX)
     def get(self, key):
-        raise NotImplementedError
+        row = self.connection.table('log').row(key)
+        return row['f:vv']
     def put(self, key, data, indices=[]):
-        raise NotImplementedError
-    def scan(self, prefix=None, start=None, stop=None, limit=None):
-        raise NotImplementedError
+        self.connection.table('log').put(key, {'f:vv':data})
+        for index in indices:
+            kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
+            self.index(kk)
+        return self.get(key)
+    def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
+        table = self.connection.table('index')
+        keys = []
+        if prefix:
+            for key, data in table.scan(row_prefix=prefix, limit=limit):
+                kk = key.split("__")[-1]
+                keys.append(kk)
+        elif start and stop:
+            for key, data in table.scan(row_start=start, row_stop=stop, limit=limit):    
+                kk = key.split("__")[-1]
+                keys.append(kk)
+        return keys
     def index(self, key):
-        raise NotImplementedError
+        self.connection.table('index').put(key, {'f:vv':'1'})
+        return key
 
-class ModelBackend(AbstractBackend):
+class ModelLogBackend(AbstractBackend):
     def get(self, key):
         obj = Log.objects.get(key=key)
         return obj.data
@@ -34,8 +51,8 @@ class ModelBackend(AbstractBackend):
         obj.save()
         for index in indices:
             kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
-            Index.objects.get_or_create(key=kk)
-        return obj.data
+            self.index(kk)
+        return self.get(key)
     def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
         keys = []
         if prefix:

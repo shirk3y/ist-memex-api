@@ -8,7 +8,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
-MEMEX_API_VERSION = "0.1"
+MEMEX_API_VERSION = "2"
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
@@ -107,7 +107,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-API_LOG_MANAGER_BACKEND = os.environ.get('MEMEX_API_LOG_MANAGER_BACKEND', 'api.backends.ModelBackend')
+API_LOG_MANAGER_BACKEND = os.environ.get('MEMEX_API_LOG_MANAGER_BACKEND', 'api.backends.ModelLogBackend')
 
 HBASE_HOST = os.environ.get('MEMEX_API_HBASE_HOST', 'localhost')
 HBASE_PORT = os.environ.get('MEMEX_API_HBASE_PORT', '9090')
