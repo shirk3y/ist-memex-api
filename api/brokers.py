@@ -20,7 +20,8 @@ class GenericRecordBroker(object):
 
     def save(self, doc, key = None):
         doc, key = self.validate(doc, key)
-        return self.deserialize(self.backend.put(key, self.serialize(doc), doc['indices']))
+        self.backend.put(key, self.serialize(doc), doc['indices'])
+        return self.get(key)
 
     def validate(self, doc, key = None):
         raise NotImplementedError

@@ -1,3 +1,5 @@
+import happybase
+
 from models import *
 
 class AbstractBackend:
@@ -11,7 +13,16 @@ class AbstractBackend:
         raise NotImplementedError
 
 class HbaseBackend(AbstractBackend):
-    pass
+    def __init__(self):
+        self.connection = happybase.Connection(host=settings.HBASE_HOST, port=settings.HBASE_PORT, table_prefix=settings.HBASE_TABLE_PREFIX)
+    def get(self, key):
+        raise NotImplementedError
+    def put(self, key, data, indices=[]):
+        raise NotImplementedError
+    def scan(self, prefix=None, start=None, stop=None, limit=None):
+        raise NotImplementedError
+    def index(self, key):
+        raise NotImplementedError
 
 class ModelBackend(AbstractBackend):
     def get(self, key):
@@ -36,7 +47,6 @@ class ModelBackend(AbstractBackend):
                 key = obj.key.split("__")[-1]
                 keys.append(key)
         return keys
-
     def index(self, key):
         obj = Index.objects.get_or_create(key=key)
         return obj.key
