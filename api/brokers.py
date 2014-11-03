@@ -137,7 +137,7 @@ class LogBroker(GenericRecordBroker):
         for key in required_children:
             _section = doc.get(key)
             if _section is None:
-                raise ValidationError("Schema error: '{key}' is required".format(key=key))
+                doc[key] = _section = {}
             if type(_section) != type(dict()):
                 raise ValidationError("Schema error: '{key}' may not be type '{_type}'".format(key=key, _type=type(_section).__name__))
         doc['indices'] = doc.get('indices', [])
@@ -219,7 +219,7 @@ class LogBroker(GenericRecordBroker):
 
     def validate_component(self, doc):
         valid_children = ('apiLanguage', 'apiVersion', 'name', 'version')
-        required_children = ('apiVersion', 'name', 'version')
+        required_children = ('name', 'version')
         _section = doc.get('component', {})
         for key in _section:
             if not key in valid_children:
@@ -227,6 +227,10 @@ class LogBroker(GenericRecordBroker):
         for key in required_children:
             if not key in _section or not _section[key]:
                 raise ValidationError("Schema error: 'component.{key}' is required".format(key=key))
+        _apiVersion = _section.get("apiVersion")
+        if _apiVersion is None:
+            _section['apiVersion'] = settings.MEMEX_API_VERSION
+        doc['component'] = _section
         self.add_index(doc, 'component.name', '{name}_{version}'.format(name=_section['name'], version=_section['version']).strip())
         return doc
 

@@ -65,5 +65,5 @@ class ModelLogBackend(AbstractBackend):
                 keys.append(key)
         return keys
     def index(self, key):
-        obj = Index.objects.get_or_create(key=key)
+        obj, new = Index.objects.get_or_create(key=key)
         return obj.key
