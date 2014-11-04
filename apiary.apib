@@ -38,9 +38,9 @@ Discussion of activity types and logging detail specifics for various activity t
                 "activity": "high level activity (see below). Optional."
             },
             "client": {   
-                "ipAddess": "IP address of client. Optional.",
-                "userID": "ID of signed in user. Optional.",
-                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "ipAddress": "IP address of client. Optional.",
+                "userId": "ID of signed in user. Optional.",
+                "sessionId": "a UUID used to group logs together by session. Optional.",
                 "userAgent": "user agent (e.g. browser) of client. Optional",
             },
             "component": {
@@ -73,6 +73,7 @@ Discussion of activity types and logging detail specifics for various activity t
         }
         ]
 
+## Collection [/logs]
 ### Create a Log [POST]
 + Request (application/json)
 
@@ -89,9 +90,9 @@ Discussion of activity types and logging detail specifics for various activity t
                 "activity": "high level activity (see below). Optional."
             },
             "client": {   
-                "ipAddess": "IP address of client. Optional.",
-                "userID": "ID of signed in user. Optional.",
-                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "ipAddress": "IP address of client. Optional.",
+                "userId": "ID of signed in user. Optional.",
+                "sessionId": "a UUID used to group logs together by session. Optional.",
                 "userAgent": "user agent (e.g. browser) of client. Optional",
             },
             "component": {
@@ -139,9 +140,9 @@ Discussion of activity types and logging detail specifics for various activity t
                 "activity": "high level activity (see below). Required.",
             },
             "client": {   
-                "ipAddess": "IP address of client. Optional.",
-                "userID": "ID of signed in user. Optional.",
-                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "ipAddress": "IP address of client. Optional.",
+                "userId": "ID of signed in user. Optional.",
+                "sessionId": "a UUID used to group logs together by session. Optional.",
                 "userAgent": "user agent (e.g. browser) of client. Optional",
             },
             "component": {
@@ -195,9 +196,9 @@ A single Log item with all its details
                 "activity": "high level activity (see below). Required.",
             },
             "client": {   
-                "ipAddess": "IP address of client. Optional.",
-                "userID": "ID of signed in user. Optional.",
-                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "ipAddress": "IP address of client. Optional.",
+                "userId": "ID of signed in user. Optional.",
+                "sessionId": "a UUID used to group logs together by session. Optional.",
                 "userAgent": "user agent (e.g. browser) of client. Optional",
             },
             "component": {
@@ -229,26 +230,106 @@ A single Log item with all its details
             ]
         }
         
-### Remove a Log [DELETE]
-+ Response 204
+### Create a Log [PUT]
++ Request (application/json)
 
-## Timestamp Index [/logs/from/{start}/to/{end}{?limit,expand}]
-A list of Log items by timestamp, returned in descending order
+        {
+            "key" : "[RFC 4122 UUID]. Required. Defaults to Type 4 (random) UUID.",
+            "time": {
+                "startedAt": "GMT epoch milliseconds of the activity started. Required. Defaults to current server time.",
+                "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
+            },
+            "action": {
+                "type": "SYSTEM | USER. Required.",
+                "description": "description of event. Required.",
+                "workflow": "high level workflow step. Optional.",
+                "activity": "high level activity (see below). Optional."
+            },
+            "client": {   
+                "ipAddress": "IP address of client. Optional.",
+                "userId": "ID of signed in user. Optional.",
+                "sessionId": "a UUID used to group logs together by session. Optional.",
+                "userAgent": "user agent (e.g. browser) of client. Optional",
+            },
+            "component": {
+                "name": "name of the tool sending logs. Required.",
+                "version": "tool version. Required.",
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required. Defaults to current API version.",
+            },
+            "acl": {
+                "privacy": "public | private | controlled. Required.",
+                "controls": "Group(s) which can access a 'controlled' resource. Required iff 'privacy' == 'controlled'.",
+            },
+            "details" : {
+                "[Details are activity-specific values]" : "...",
+            },
+            "attribute_indexes" : [
+                {
+                    "key" : "source",
+                    "value" : "10.3.2.30",
+                },
+                {
+                    "key" : "[String]",
+                    "value" : "[String]",
+                },
+                {
+                    "key" : "[Attributes are invididually indexed values]",
+                    "value" : "[Keys and values should be concise strings]",
+                },
+            ]
+        }
 
-+ Parameters
-    + start (required, integer, `1413937453213`) ... Maximum timestamp
-    + end (optional, integer, `1413937382546`) ... Minimum timestamp   
-    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
-    + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
-
-### Search by Timestamp  [GET]
-+ Response 200 (application/json)
-
-    + Body
-
-            ["19f83229-e795-4495-84a3-a8530b4e71a8",]
         
-## Attribute Index [/logs/by/{key}/{value}{?limit,expand}]
++ Response 201 (application/json)
+
+        {
+            "key" : "[RFC 4122 UUID]",
+            "time": {
+                "startedAt": "GMT epoch milliseconds of the activity started. Required.",
+                "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
+            },
+            "action": {
+                "type": "SYSTEM | USER. Required.",
+                "description": "description of event. Optional.",
+                "workflow": "high level workflow step. Required.",
+                "activity": "high level activity (see below). Required.",
+            },
+            "client": {   
+                "ipAddress": "IP address of client. Optional.",
+                "userId": "ID of signed in user. Optional.",
+                "sessionId": "a UUID used to group logs together by session. Optional.",
+                "userAgent": "user agent (e.g. browser) of client. Optional",
+            },
+            "component": {
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required.",
+                "name": "name of the tool sending logs. Required.",
+                "version": "tool version. Required.",
+            },
+            "acl": {
+                "privacy": "public | private | controlled. Required.",
+                "controls": "Group(s) which can access a 'controlled' resource. Required iff 'privacy' == 'controlled'.",
+            },
+            "details" : {
+                "[Details are activity-specific values]" : "...",
+            },
+            "attribute_indexes" : [
+                {
+                    "key" : "source",
+                    "value" : "10.3.2.30",
+                },
+                {
+                    "key" : "[String]",
+                    "value" : "[String]",
+                },
+                {
+                    "key" : "[Attributes are invididually indexed values]",
+                    "value" : "[Keys and values should be concise strings]",
+                },
+            ]
+        }        
+## Attribute Index Match [/logs/where/{key}/is/{value}{?limit,expand}]
 A list of Log items matching a given attribute/value pair
 
 + Parameters
@@ -264,4 +345,37 @@ A list of Log items matching a given attribute/value pair
 
             ["19f83229-e795-4495-84a3-a8530b4e71a8"]
         
+## Attribute Index Prefix Match [/logs/where/{key}/like/{prefix}{?limit,expand}]
+A list of Log items with a given attribute starting with a specified prefix
+
++ Parameters
+    + key (required, string, `source`) ... Attribute key
+    + prefix (required, string, `10.3.`) ... Attribute value prefix
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
+
+### Search by Attribute  [GET]
++ Response 200 (application/json)
+
+    + Body
+
+            ["19f83229-e795-4495-84a3-a8530b4e71a8"]
         
+## Attribute Index Range Match [/logs/where/{key}/from/{start}/to/{stop}{?limit,expand}]
+A list of Log items with a given attribute in a specified lexicographic range
+
++ Parameters
+    + key (required, string, `source`) ... Attribute key
+    + start (required, string, `10.3.`) ... Starting attribute value
+    + stop (required, string, `10.4.`) ... Ending attribute value
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
+
+### Search by Attribute  [GET]
++ Response 200 (application/json)
+
+    + Body
+
+            ["19f83229-e795-4495-84a3-a8530b4e71a8"]
+        
+                                                
