@@ -1,0 +1,267 @@
+FORMAT: 1A
+HOST: https://10.3.2.30/api/v2
+
+# Memex API
+Memex API provides consolidated access to Memex logging services.
+
+Version control for this file is hosted at https://github.com/istresearch/ist-memex-api/
+
+Documentation generated from this file is hosted at http://docs.memexapi.apiary.io/
+
+Links to `Production` in the examples require access to the Memex VPN
+
+# Group Logging 
+Logging resources of the **Memex API**
+
+Logs are identified by a RFC 4122-compliant UUID.
+
+Discussion of activity types and logging detail specifics for various activity types can be found on the Memex wiki at: https://memexproxy.com/wiki/pages/viewpage.action?pageId=3310199
+    
+## Collection [/logs{?limit,expand}]
+### List recent Logs [GET]
++ Parameters
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `true`) ... If true, return full Log items; if false, just return keys. Defaults to false.
++ Response 200  (application/json)
+
+        [
+        {
+            "key" : "[RFC 4122 UUID]",
+            "time": {
+                "startedAt": "GMT epoch milliseconds of the activity started. Required. Defaults to current server time.",
+                "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
+            },
+            "action": {
+                "type": "SYSTEM | USER. Required.",
+                "description": "description of event. Required.",
+                "workflow": "high level workflow step. Optional.",
+                "activity": "high level activity (see below). Optional."
+            },
+            "client": {   
+                "ipAddess": "IP address of client. Optional.",
+                "userID": "ID of signed in user. Optional.",
+                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "userAgent": "user agent (e.g. browser) of client. Optional",
+            },
+            "component": {
+                "name": "name of the tool sending logs. Required.",
+                "version": "tool version. Required.",
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required. Defaults to current API version.",
+            },
+            "acl": {
+                "privacy": "public | private | controlled. Required.",
+                "controls": "Group(s) which can access a 'controlled' resource. Required iff 'privacy' == 'controlled'.",
+            },
+            "details" : {
+                "[Details are activity-specific values]" : "...",
+            },
+            "attribute_indexes" : [
+                {
+                    "key" : "source",
+                    "value" : "10.3.2.30",
+                },
+                {
+                    "key" : "[String]",
+                    "value" : "[String]",
+                },
+                {
+                    "key" : "[Attributes are invididually indexed values]",
+                    "value" : "[Keys and values should be concise strings]",
+                },
+            ]
+        }
+        ]
+
+### Create a Log [POST]
++ Request (application/json)
+
+        {
+            "key" : "[RFC 4122 UUID]. Required. Defaults to Type 4 (random) UUID.",
+            "time": {
+                "startedAt": "GMT epoch milliseconds of the activity started. Required. Defaults to current server time.",
+                "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
+            },
+            "action": {
+                "type": "SYSTEM | USER. Required.",
+                "description": "description of event. Required.",
+                "workflow": "high level workflow step. Optional.",
+                "activity": "high level activity (see below). Optional."
+            },
+            "client": {   
+                "ipAddess": "IP address of client. Optional.",
+                "userID": "ID of signed in user. Optional.",
+                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "userAgent": "user agent (e.g. browser) of client. Optional",
+            },
+            "component": {
+                "name": "name of the tool sending logs. Required.",
+                "version": "tool version. Required.",
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required. Defaults to current API version.",
+            },
+            "acl": {
+                "privacy": "public | private | controlled. Required.",
+                "controls": "Group(s) which can access a 'controlled' resource. Required iff 'privacy' == 'controlled'.",
+            },
+            "details" : {
+                "[Details are activity-specific values]" : "...",
+            },
+            "attribute_indexes" : [
+                {
+                    "key" : "source",
+                    "value" : "10.3.2.30",
+                },
+                {
+                    "key" : "[String]",
+                    "value" : "[String]",
+                },
+                {
+                    "key" : "[Attributes are invididually indexed values]",
+                    "value" : "[Keys and values should be concise strings]",
+                },
+            ]
+        }
+
+        
++ Response 201 (application/json)
+
+        {
+            "key" : "[RFC 4122 UUID]",
+            "time": {
+                "startedAt": "GMT epoch milliseconds of the activity started. Required.",
+                "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
+            },
+            "action": {
+                "type": "SYSTEM | USER. Required.",
+                "description": "description of event. Optional.",
+                "workflow": "high level workflow step. Required.",
+                "activity": "high level activity (see below). Required.",
+            },
+            "client": {   
+                "ipAddess": "IP address of client. Optional.",
+                "userID": "ID of signed in user. Optional.",
+                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "userAgent": "user agent (e.g. browser) of client. Optional",
+            },
+            "component": {
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required.",
+                "name": "name of the tool sending logs. Required.",
+                "version": "tool version. Required.",
+            },
+            "acl": {
+                "privacy": "public | private | controlled. Required.",
+                "controls": "Group(s) which can access a 'controlled' resource. Required iff 'privacy' == 'controlled'.",
+            },
+            "details" : {
+                "[Details are activity-specific values]" : "...",
+            },
+            "attribute_indexes" : [
+                {
+                    "key" : "source",
+                    "value" : "10.3.2.30",
+                },
+                {
+                    "key" : "[String]",
+                    "value" : "[String]",
+                },
+                {
+                    "key" : "[Attributes are invididually indexed values]",
+                    "value" : "[Keys and values should be concise strings]",
+                },
+            ]
+        }
+        
+## Item [/logs/{uuid}]
+A single Log item with all its details
+
++ Parameters
+    + uuid (required, string, `19f83229-e795-4495-84a3-a8530b4e71a8`) ... Alphanumeric `uuid` of the Log to retrieve. 
+
+### Retrieve a Log [GET]
++ Response 200 (application/json)
+
+        {
+            "key" : "[RFC 4122 UUID]",
+            "time": {
+                "startedAt": "GMT epoch milliseconds of the activity started. Required.",
+                "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
+            },
+            "action": {
+                "type": "SYSTEM | USER. Required.",
+                "description": "description of event. Optional.",
+                "workflow": "high level workflow step. Required.",
+                "activity": "high level activity (see below). Required.",
+            },
+            "client": {   
+                "ipAddess": "IP address of client. Optional.",
+                "userID": "ID of signed in user. Optional.",
+                "sessionID": "a UUID used to group logs together by session. Optional.",
+                "userAgent": "user agent (e.g. browser) of client. Optional",
+            },
+            "component": {
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required.",
+                "name": "name of the tool sending logs. Required.",
+                "version": "tool version. Required.",
+            },
+            "acl": {
+                "privacy": "public | private | controlled. Required.",
+                "controls": "Group(s) which can access a 'controlled' resource. Required iff 'privacy' == 'controlled'.",
+            },
+            "details" : {
+                "[Details are activity-specific values]" : "...",
+            },
+            "attribute_indexes" : [
+                {
+                    "key" : "source",
+                    "value" : "10.3.2.30",
+                },
+                {
+                    "key" : "[String]",
+                    "value" : "[String]",
+                },
+                {
+                    "key" : "[Attributes are invididually indexed values]",
+                    "value" : "[Keys and values should be concise strings]",
+                },
+            ]
+        }
+        
+### Remove a Log [DELETE]
++ Response 204
+
+## Timestamp Index [/logs/from/{start}/to/{end}{?limit,expand}]
+A list of Log items by timestamp, returned in descending order
+
++ Parameters
+    + start (required, integer, `1413937453213`) ... Maximum timestamp
+    + end (optional, integer, `1413937382546`) ... Minimum timestamp   
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
+
+### Search by Timestamp  [GET]
++ Response 200 (application/json)
+
+    + Body
+
+            ["19f83229-e795-4495-84a3-a8530b4e71a8",]
+        
+## Attribute Index [/logs/by/{key}/{value}{?limit,expand}]
+A list of Log items matching a given attribute/value pair
+
++ Parameters
+    + key (required, string, `source`) ... Attribute key
+    + value (required, string, `10.3.2.30`) ... Attribute value   
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
+
+### Search by Attribute  [GET]
++ Response 200 (application/json)
+
+    + Body
+
+            ["19f83229-e795-4495-84a3-a8530b4e71a8"]
+        
+        
