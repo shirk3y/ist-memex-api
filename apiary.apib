@@ -328,8 +328,9 @@ A single Log item with all its details
                     "value" : "[Keys and values should be concise strings]",
                 },
             ]
-        }        
-## Attribute Index Match [/logs/where/{key}/is/{value}{?limit,expand}]
+        }    
+            
+## Search [/logs/where/{key}/is/{value}{?limit,expand}]
 A list of Log items matching a given attribute/value pair
 
 + Parameters
@@ -338,14 +339,14 @@ A list of Log items matching a given attribute/value pair
     + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
     + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
 
-### Search by Attribute  [GET]
+### Search by Attribute - Exact Match [GET]
 + Response 200 (application/json)
 
     + Body
 
             ["19f83229-e795-4495-84a3-a8530b4e71a8"]
         
-## Attribute Index Prefix Match [/logs/where/{key}/like/{prefix}{?limit,expand}]
+## Search [/logs/where/{key}/like/{prefix}{?limit,expand}]
 A list of Log items with a given attribute starting with a specified prefix
 
 + Parameters
@@ -354,14 +355,14 @@ A list of Log items with a given attribute starting with a specified prefix
     + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
     + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
 
-### Search by Attribute  [GET]
+### Search by Attribute - Prefix Match  [GET]
 + Response 200 (application/json)
 
     + Body
 
             ["19f83229-e795-4495-84a3-a8530b4e71a8"]
         
-## Attribute Index Range Match [/logs/where/{key}/from/{start}/to/{stop}{?limit,expand}]
+## Search [/logs/where/{key}/from/{start}/to/{stop}{?limit,expand}]
 A list of Log items with a given attribute in a specified lexicographic range
 
 + Parameters
@@ -371,7 +372,7 @@ A list of Log items with a given attribute in a specified lexicographic range
     + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
     + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
 
-### Search by Attribute  [GET]
+### Search by Attribute - Range Match [GET]
 + Response 200 (application/json)
 
     + Body
