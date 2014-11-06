@@ -5,8 +5,10 @@ import uuid
 import cbor
 import zlib
 import happybase
+import jsonschema
 
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 
 import settings
 
@@ -73,6 +75,162 @@ class GenericRecordBroker(object):
 
 class LogBroker(GenericRecordBroker):
 
+    SCHEMA = { 
+        "type": "object",
+        "properties": {
+            "key": { 
+                "type": "string", 
+                "pattern": "^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$" ,
+            },
+            "time": {
+                "type": "object",
+                "properties": {
+                    "startedAt": {
+                        "type": "number",
+                        "minimum": 1000000000000,
+                        "maximum": 9999999999999,
+                        "multipleOf": 1.0,
+                    },
+                    "endedAt": {
+                        "type": "number",
+                        "minimum": 1000000000000,
+                        "maximum": 9999999999999,
+                        "multipleOf": 1.0,
+                    },
+                },
+                "required": [
+                    "startedAt",
+                ],
+                "additionalProperties": False,
+            },
+            "action": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "SYSTEM",
+                            "USER"
+                        ],
+                    },
+                    "description": {
+                        "type": "string",
+                        "minLength": 1,
+                    },
+                    "workflow": {
+                        "type": "string",
+                        "minLength": 1,
+                    },
+                    "activity": {
+                        "type": "string",
+                        "minLength": 1,
+                    },
+                    "inferred": {
+                        "type": "boolean",
+                    },
+                },
+                "required": [
+                    "type", 
+                    "description",
+                    "inferred",
+                ],
+                "additionalProperties": False,
+            },
+            "client": {
+                "type": "object",
+                "properties": {
+                    "ipAddress": {
+                        "type": "string",
+                        "minLength": 1,
+                    }, 
+                    "userId": { 
+                        "type": "string",
+                        "minLength": 1,
+                    }, 
+                    "sessionId": { 
+                        "type": "string",
+                        "minLength": 1,
+                    }, 
+                    "userAgent": { 
+                        "type": "string",
+                        "minLength": 1,
+                    },
+                },
+                "additionalProperties": False,
+            },
+            "component": {
+                "type": "object",   
+                "properties": {
+                    "apiLanguage": { 
+                        "type": "string",
+                        "minLength": 1,
+                    }, 
+                    "apiVersion": { 
+                        "type": "string",
+                        "minLength": 1,
+                    }, 
+                    "name": { 
+                        "type": "string",
+                        "minLength": 1,
+                    }, 
+                    "version": { 
+                        "type": "string",
+                        "minLength": 1,
+                    },
+                },
+                "required": [
+                    "name",
+                    "version",
+                    "apiVersion",
+                ],
+                "additionalProperties": False,
+            },
+            "acl": {
+                "type": "object",
+                "properties": {
+                    "privacy": {
+                        "type": "string",
+                        "enum": [
+                            "public",
+                            "private",
+                            "controlled",
+                        ],
+                    },
+                    "controls": { },
+                },
+                "required": [
+                    "privacy",
+                ],
+                "additionalProperties": False,
+            },
+            "indices": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "key": { 
+                            "type": "string", 
+                            "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
+                        },
+                        "value": { 
+                            "type": "string", 
+                            "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
+                        },
+                    }
+                }
+                
+            },
+            "details": { } 
+        },
+        "required": [
+            "key", 
+            "time", 
+            "action",
+            "component",
+        ],
+        "additionalProperties": False,
+    }
+
     def get(self, key):
         data = self.backend.get(key)
         doc = self.deserialize(data)
@@ -99,15 +257,17 @@ class LogBroker(GenericRecordBroker):
         return GenericRecordBroker.search(self, index, value, prefix, start, end, limit, expand)
 
     def validate(self, doc, key = None):
+
+        doc['indices'] = doc.get('indices', [])
+
         doc, key = self.validate_key(doc, key)
-        doc = self.validate__tree(doc)
         doc = self.validate_time(doc)
         doc = self.validate_action(doc)
-        doc = self.validate_client(doc)
+
         doc = self.validate_component(doc)
         doc = self.validate_acl(doc)
-        doc = self.validate_details(doc)
-        doc = self.validate_indices(doc)
+
+        jsonschema.validate(doc, LogBroker.SCHEMA)
         return doc, key
 
     def validate_key(self, doc, key = None):
@@ -127,21 +287,6 @@ class LogBroker(GenericRecordBroker):
             raise ValidationError("Invalid key: '{key}'".format(key=key))
         doc['key'] = key
         return doc, key
-
-    def validate__tree(self, doc):
-        allowed_children = ('key', 'time', 'action', 'client', 'component', 'acl', 'details', 'indices')
-        required_children = ('action', 'component', 'acl')
-        for key in doc:
-            if not key in allowed_children:
-                raise ValidationError("Schema error: '{key}' is not allowed".format(key=key))
-        for key in required_children:
-            _section = doc.get(key)
-            if _section is None:
-                doc[key] = _section = {}
-            if type(_section) != type(dict()):
-                raise ValidationError("Schema error: '{key}' may not be type '{_type}'".format(key=key, _type=type(_section).__name__))
-        doc['indices'] = doc.get('indices', [])
-        return doc
 
     def validate_time(self, doc):
         valid_children = ('startedAt', 'endedAt')
@@ -176,31 +321,11 @@ class LogBroker(GenericRecordBroker):
         for cc in str(ts):
             flipped.append(str(9 - int(cc)))
         return "".join(flipped)
-
+    
     def validate_action(self, doc):
-        valid_children = ('type', 'description', 'workflow', 'activity')
-        _section= doc.get('action', {})
-        for key in _section:
-            if not key in valid_children:
-                raise ValidationError("Schema error: 'action.{key}' is not allowed".format(key=key))
-
-        _type = _section.get('type', '').upper()
-        if not _type:
-            raise ValidationError("Schema error: 'action.type' is required")
-        if not _type in ("SYSTEM", "USER"):
-            raise ValidationError("Schema error: invalid value for 'action.type'")
-        _section["type"] = _type
-
-        _desc = _section.get('description', '')
-        if not _desc:
-            raise ValidationError("Schema error: 'action.description' is required")
-
-        if 'workflow' in _section and _section['workflow']:
-            self.add_index(doc, 'action.workflow', _section['workflow'])
-        if 'activity' in _section and _section['activity']:
-            self.add_index(doc, 'action.activity', _section['activity'])
-
-        doc["action"] = _section
+        _section = doc.get('action', {})
+        _section['type'] = _section.get('type', '').upper()
+        doc['action'] = _section
         return doc
 
     def validate_client(self, doc):
@@ -218,49 +343,20 @@ class LogBroker(GenericRecordBroker):
         return doc
 
     def validate_component(self, doc):
-        valid_children = ('apiLanguage', 'apiVersion', 'name', 'version')
-        required_children = ('name', 'version')
         _section = doc.get('component', {})
-        for key in _section:
-            if not key in valid_children:
-                raise ValidationError("Schema error: 'component.{key}' is not allowed".format(key=key))
-        for key in required_children:
-            if not key in _section or not _section[key]:
-                raise ValidationError("Schema error: 'component.{key}' is required".format(key=key))
-        _apiVersion = _section.get("apiVersion")
-        if _apiVersion is None:
-            _section['apiVersion'] = settings.MEMEX_API_VERSION
+        _section['apiVersion'] = _section.get("apiVersion", settings.MEMEX_API_VERSION)
         doc['component'] = _section
-        self.add_index(doc, 'component.name', '{name}_{version}'.format(name=_section['name'], version=_section['version']).strip())
+        self.add_index(doc, 'component.name', slugify(unicode('{name}_{version}'.format(name=_section['name'], version=_section['version']))))
         return doc
 
     def validate_acl(self, doc):
-        valid_children = ('privacy', 'controls')
         _section = doc.get('acl', {})
-        for key in _section:
-            if not key in valid_children:
-                raise ValidationError("Schema error: 'acl.{key}' is not allowed".format(key=key))
-        _privacy = _section.get('privacy', '').lower()
-        if not _privacy:
-            _privacy = 'public'
-        if not _privacy in ('public', 'private', 'controlled'):
-            raise ValidationError("Schema error: invalid value for 'acl.privacy'")
+        _privacy = _section.get('privacy', 'public').lower()
         if _privacy == 'controlled':
             _controls = _section.get('controls')
             if not _controls:
                 raise ValidationError("Schema error: 'acl.controls' is missing") 
         _section['privacy'] = _privacy
-        return doc
-
-    def validate_details(self, doc):
-        return doc
-
-    def validate_indices(self, doc):
-        _section = doc.get('indices', [])
-        for entry in _section:
-            key = entry.get('key')
-            value = entry.get('value')
-            self.validate_index(key, value)
         return doc
 
     def add_index(self, doc, key, value):
