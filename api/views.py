@@ -39,12 +39,6 @@ class LogItem(APIView):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
         response = broker.save(request.DATA, key)
         return Response(response)
-#    def patch(self, request, key, format=None):
-#        response = {'type':'PATCH'}
-#        return Response(response)
-#    def delete(self, request, key, format=None):
-#        response = {'type':'DELETE'}
-#        return Response(response)
 
 class LogSearch(APIView):
     def get(self, request, index, value=None, prefix=None, start=None, end=None, format=None):
