@@ -8,7 +8,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
-MEMEX_API_VERSION = "v2.1"
+MEMEX_API_VERSION = "v2.2"
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os

@@ -231,11 +231,22 @@ class LogBroker(GenericRecordBroker):
         "additionalProperties": False,
     }
 
+    MAX_OBJECT_SIZE = 1 * 1024 * 1024 #1MB
+
     def get(self, key):
         data = self.backend.get(key)
         doc = self.deserialize(data)
         doc = self.strip_indices(doc)
         return doc
+
+    def save(self, doc, key = None):
+        doc, key = self.validate(doc, key)
+        data = self.serialize(doc)
+        dataSize = sys.getsizeof(data)
+        if dataSize > LogBroker.MAX_OBJECT_SIZE:
+            raise ValidationError("Object data size ({dataSize} bytes) exceeds max object size ({maxSize} bytes)".format(dataSize=dataSize, maxSize=LogBroker.MAX_OBJECT_SIZE))
+        self.backend.put(key, data, doc['indices'])
+        return self.get(key)
 
     def search(self, index, value=None, prefix=None, start=None, end=None, limit=None, expand=False):
         if index in ('time.startedAt', 'time.endedAt'):
