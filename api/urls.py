@@ -1,9 +1,13 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-from views import LogList, LogItem, LogSearch
+
+from logs import LogList, LogItem, LogSearch
+
+from artifacts import ArtifactList #, LogItem, LogSearch
 
 urlpatterns = patterns('',
     url(r'^/?$', 'api.views.index'),
+    url(r'^artifacts/?$', ArtifactList.as_view(), name='artifact-list'),
     url(r'^logs/?$', LogList.as_view(), name='log-list'),
     url(r'^logs/(?i)(?P<key>[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})/?$', 
             LogItem.as_view(), name='log-item'),

@@ -108,6 +108,7 @@ REST_FRAMEWORK = {
 }
 
 API_LOG_MANAGER_BACKEND = os.environ.get('MEMEX_API_LOG_MANAGER_BACKEND', 'api.logs.ModelLogBackend')
+API_ARTIFACT_MANAGER_BACKEND = os.environ.get('MEMEX_API_ARTIFACT_MANAGER_BACKEND', 'api.artifacts.ModelArtifactBackend')
 
 HBASE_HOST = os.environ.get('MEMEX_API_HBASE_HOST', 'localhost')
 HBASE_PORT = os.environ.get('MEMEX_API_HBASE_PORT', '9090')

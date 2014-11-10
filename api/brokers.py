@@ -66,10 +66,10 @@ class GenericRecordBroker(object):
             raise ValidationError("Invalid index value '{value}'".format(value=value))
 
     def instantiate_backend(self, backend_class):
-        module_name = '.'.join(settings.API_LOG_MANAGER_BACKEND.split('.')[:-1])
+        module_name = '.'.join(backend_class.split('.')[:-1])
         __import__(module_name)
         module_obj = sys.modules[module_name]
-        class_name = settings.API_LOG_MANAGER_BACKEND.split('.')[-1]
+        class_name = backend_class.split('.')[-1]
         class_obj = getattr(module_obj, class_name)
         return class_obj()
 

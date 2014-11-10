@@ -7,12 +7,45 @@ import jsonschema
 
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 import settings
 
 from models import *
 from brokers import GenericRecordBroker
 from backends import AbstractBackend
+
+class LogList(APIView):
+    def get(self, request, format=None):
+        limit = int(request.QUERY_PARAMS.get('limit', 1000))
+        expand = bool(request.QUERY_PARAMS.get('expand', False))
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.search(index='time.startedAt',prefix='', limit=limit, expand=expand)
+        return Response(response)
+    def post(self, request, format=None):
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.save(request.DATA)
+        return Response(response)
+
+class LogItem(APIView):
+    def get(self, request, key, format=None):
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.get(key)
+        return Response(response)
+    def put(self, request, key, format=None):
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.save(request.DATA, key)
+        return Response(response)
+
+class LogSearch(APIView):
+    def get(self, request, index, value=None, prefix=None, start=None, end=None, format=None):
+        limit = int(request.QUERY_PARAMS.get('limit', 1000))
+        expand = bool(request.QUERY_PARAMS.get('expand', False))
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit, expand=expand)
+        return Response(response)
+
 
 class LogBroker(GenericRecordBroker):
 

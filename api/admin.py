@@ -1,12 +1,11 @@
 from django.contrib import admin
 from models import *
 
-class LogAdmin(admin.ModelAdmin):
+class GenericModelAdmin(admin.ModelAdmin):
     list_display = ('key',)
 
-class IndexAdmin(admin.ModelAdmin):
-    list_display = ('key',)
+admin.site.register(Log, GenericModelAdmin)
+admin.site.register(Index, GenericModelAdmin)
 
-admin.site.register(Log, LogAdmin)
-admin.site.register(Index, IndexAdmin)
-
+admin.site.register(Artifact, GenericModelAdmin)
+admin.site.register(ArtifactIndex, GenericModelAdmin)
