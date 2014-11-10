@@ -60,10 +60,7 @@ class GenericRecordBroker(object):
         return results
 
     def validate_index(self, key, value):
-        if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{1,48}').match(key)):
-            raise ValidationError("Invalid index key '{key}'".format(key=key))
-        if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{0,160}').match(value)):
-            raise ValidationError("Invalid index value '{value}'".format(value=value))
+        raise NotImplementedError
 
     def instantiate_backend(self, backend_class):
         module_name = '.'.join(backend_class.split('.')[:-1])

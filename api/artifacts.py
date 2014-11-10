@@ -27,6 +27,24 @@ class ArtifactList(APIView):
         response = broker.save(request.DATA)
         return Response(response)
 
+class ArtifactItem(APIView):
+    def get(self, request, key, format=None):
+        broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
+        response = broker.get(key)
+        return Response(response)
+    def put(self, request, key, format=None):
+        broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
+        response = broker.save(request.DATA, key)
+        return Response(response)
+
+class ArtifactSearch(APIView):
+    def get(self, request, index, value=None, prefix=None, start=None, end=None, format=None):
+        limit = int(request.QUERY_PARAMS.get('limit', 1000))
+        expand = bool(request.QUERY_PARAMS.get('expand', False))
+        broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
+        response = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit, expand=expand)
+        return Response(response)
+
 class ArtifactBroker(GenericRecordBroker):
 
     SCHEMA = { 
@@ -50,7 +68,28 @@ class ArtifactBroker(GenericRecordBroker):
             "response": {
                 "type": "object",
             },
+            "indices": {
+               "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "key": {
+                            "type": "string",
+                            "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
+                        },
+                        "value": {
+                            "type": "string",
+                            "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
+                        },
+                    },
+                },
+            },
         },
+        "required": [
+            "key",
+            "url",
+            "timestamp",
+        ],
     }
 
     MAX_OBJECT_SIZE = 5 * 1024 * 1024 #5MB
@@ -94,38 +133,43 @@ class ArtifactBroker(GenericRecordBroker):
         doc['indices'] = doc.get('indices', [])
 
         doc, key = self.validate_key(doc, key)
+        doc = self.validate_timestamp(doc)
+
         jsonschema.validate(doc, ArtifactBroker.SCHEMA)
         return doc, key
 
     def validate_key(self, doc, key = None):
         _key = doc.get('key', '').lower()
-        # first make sure we have a key; if not, generate a random key
+        # first make sure we have a key; if not, throw an error
         if not key:
             if _key:
                 key = _key
             else:
-                key = _key = str(uuid.uuid4())
+                raise ValidationError("Required key not found".format(key1=key, key2=_key))
         key = key.lower()
         # now make sure the two match
         if key and _key and key != _key:
             raise ValidationError("Key mismatch; '{key1}' != '{key2}'".format(key1=key, key2=_key))
-        # finally, check that the key is in the correct format
-        if not bool(re.compile('[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}').match(key)):
-            raise ValidationError("Invalid key: '{key}'".format(key=key))
         doc['key'] = key
         return doc, key
 
-    def validate_timestamp(self, ts):
+    def validate_timestamp(self, doc):
+        ts = doc.get('timestamp', int(time.time() * 1000))
         try:
-            return int(ts)
+            doc['timestamp'] = int(ts)
         except:
             raise ValidationError("Parser error: '{ts}' could not interpreted as a timestamp".format(ts=ts))
+        self.add_index(doc, 'timestamp', self.flip_timestamp(doc['timestamp']))
+        return doc
 
     def flip_timestamp(self, ts):
         flipped = []
         for cc in str(ts):
             flipped.append(str(9 - int(cc)))
         return "".join(flipped)
+
+    def validate_index(self, key, value):
+        pass
     
     def add_index(self, doc, key, value):
         try:
@@ -133,6 +177,15 @@ class ArtifactBroker(GenericRecordBroker):
             doc['indices'].append({'key':key, 'value':value})
         except ValidationError:
             pass
+
+    def strip_indices(self, doc):
+        internal_indices = ('timestamp',)
+        indices = doc.get('indices')
+        doc['indices'] = []
+        for entry in indices:
+            if not entry['key'] in internal_indices:
+                doc['indices'].append(entry)
+        return doc
 
 class HbaseArtifactBackend(AbstractBackend):
     def __init__(self):

@@ -190,11 +190,10 @@ class LogBroker(GenericRecordBroker):
                             "type": "string", 
                             "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
                         },
-                    }
-                }
-                
+                    },
+                },
             },
-            "details": { } 
+            "details": { },
         },
         "required": [
             "key", 
@@ -343,6 +342,12 @@ class LogBroker(GenericRecordBroker):
                 raise ValidationError("Schema error: 'acl.controls' is missing") 
         _section['privacy'] = _privacy
         return doc
+
+    def validate_index(self, key, value):
+        if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{1,48}').match(key)):
+            raise ValidationError("Invalid index key '{key}'".format(key=key))
+        if not bool(re.compile('[0-9a-zA-Z$.!*()_+-]{0,160}').match(value)):
+            raise ValidationError("Invalid index value '{value}'".format(value=value))
 
     def add_index(self, doc, key, value):
         try:
