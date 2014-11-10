@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
@@ -5,9 +7,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
-import json
 import settings
-from brokers import LogBroker
+
+from logs import LogBroker
 
 @api_view(['GET'])
 def index(request):
