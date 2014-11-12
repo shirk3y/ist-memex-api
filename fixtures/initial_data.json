@@ -277,7 +277,7 @@
     "is_active": true,
     "is_superuser": true,
     "is_staff": true,
-    "last_login": "2014-11-12T23:23:43Z",
+    "last_login": "2014-11-12T23:49:06Z",
     "groups": [],
     "user_permissions": [],
     "password": "pbkdf2_sha256$12000$PuwwfxwHGbfi$XDQum6sPFApsgMgpz7D7VKUvIevMMtyLowP79ynjS7I=",
@@ -286,5 +286,13 @@
   },
   "model": "auth.user",
   "pk": 1
+},
+{
+  "fields": {
+    "user": 1,
+    "created": "2014-11-12T23:49:17Z"
+  },
+  "model": "authtoken.token",
+  "pk": "9f92d85914f8fdbe5a01dadb9aee74a2167d60ab"
 }
 ]
