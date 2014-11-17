@@ -40,10 +40,13 @@ class GenericRecordBroker(object):
         return cbor.loads(zlib.decompress(data))
 
     def delete_indices(self, key):
-        doc = self.get(key)
-        for ii in doc['indices']:
-            kk = "{}__{}__{}".format(ii['key'], ii['value'], key)
-            self.backend.delete_index(kk)
+        try:
+            doc = self.get(key)
+            for ii in doc['indices']:
+                kk = "{}__{}__{}".format(ii['key'], ii['value'], key)
+                self.backend.delete_index(kk)
+        except:
+            pass
 
     def search(self, index, value=None, prefix=None, start=None, end=None, limit=None, expand=False):
         results = []
