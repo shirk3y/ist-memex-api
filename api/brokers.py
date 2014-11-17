@@ -7,7 +7,7 @@ import zlib
 import happybase
 import jsonschema
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.text import slugify
 
 import settings
@@ -20,10 +20,16 @@ class GenericRecordBroker(object):
         data = self.backend.get(key)
         return self.deserialize(data)
 
-    def save(self, doc, key = None):
+    def save(self, doc, key = None, update = False):
+        if update:
+            self.delete_indices(key)
         doc, key = self.validate(doc, key)
         self.backend.put(key, self.serialize(doc), doc['indices'])
         return self.get(key)
+
+    def delete(self, key):
+        self.delete_indices(key)
+        self.backend.delete(key)
 
     def validate(self, doc, key = None):
         raise NotImplementedError
@@ -33,6 +39,12 @@ class GenericRecordBroker(object):
 
     def deserialize(self, data):
         return cbor.loads(zlib.decompress(data))
+
+    def delete_indices(self, key):
+        doc = self.get(key)
+        for ii in doc['indices']:
+            kk = "{}__{}__{}".format(ii['key'], ii['value'], key)
+            self.backend.delete_index(kk)
 
     def search(self, index, value=None, prefix=None, start=None, end=None, limit=None, expand=False):
         results = []
@@ -55,7 +67,10 @@ class GenericRecordBroker(object):
         if expand:
             _results = []
             for result in results:
-                _results.append(self.get(result))
+                try:
+                    _results.append(self.get(result))
+                except ObjectDoesNotExist:
+                    pass
             results = _results
         return results
 
