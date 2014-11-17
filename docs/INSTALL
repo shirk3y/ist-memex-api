@@ -3,9 +3,9 @@ Creating HBase Tables
 The following python code can be executed to set up HBase tables for logs and artifacts
 
 import happybase
-conn = happybase.Connection(host='localhost')
-conn.create_table('memex_log', {'f':{}})
-conn.create_table('memex_index', {'f':{}})
-conn.create_table('memex_artifact', {'f':{}})
-conn.create_table('memex_artifact_index', {'f':{}})
+conn = happybase.Connection(host='localhost', table_prefix='memex')
+conn.create_table('log', {'f':{}})
+conn.create_table('index', {'f':{}})
+conn.create_table('artifact', {'f':{}})
+conn.create_table('artifact_index', {'f':{}})
 
