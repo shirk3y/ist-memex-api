@@ -21,7 +21,13 @@ class LogList(APIView):
         limit = int(request.QUERY_PARAMS.get('limit', 1000))
         expand = bool(request.QUERY_PARAMS.get('expand', False))
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
-        response = broker.search(index='time.startedAt',prefix='', limit=limit, expand=expand)
+        docs = broker.search(index='time.startedAt',prefix='', limit=limit, expand=expand)
+        response = []
+        for doc in docs:
+            if expand:
+                response.append(broker.strip_indices(doc))
+            else:
+                response.append(doc)
         return Response(response)
     def post(self, request, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
@@ -31,11 +37,16 @@ class LogList(APIView):
 class LogItem(APIView):
     def get(self, request, key, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
-        response = broker.get(key)
+        doc = broker.get(key)
+        response = broker.strip_indices(doc)
         return Response(response)
     def put(self, request, key, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
         response = broker.save(request.DATA, key)
+        return Response(response)
+    def delete(self, request, key, format=None):
+        broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
+        response = broker.delete(key)
         return Response(response)
 
 class LogSearch(APIView):
@@ -43,7 +54,13 @@ class LogSearch(APIView):
         limit = int(request.QUERY_PARAMS.get('limit', 1000))
         expand = bool(request.QUERY_PARAMS.get('expand', False))
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
-        response = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit, expand=expand)
+        docs = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit, expand=expand)
+        response = []
+        for doc in docs:
+            if expand:
+                response.append(broker.strip_indices(doc))
+            else:
+                response.append(doc)
         return Response(response)
 
 
@@ -209,11 +226,11 @@ class LogBroker(GenericRecordBroker):
     def get(self, key):
         data = self.backend.get(key)
         doc = self.deserialize(data)
-        doc = self.strip_indices(doc)
         return doc
 
     def save(self, doc, key = None):
         doc, key = self.validate(doc, key)
+        self.delete_indices(key)
         data = self.serialize(doc)
         dataSize = sys.getsizeof(data)
         if dataSize > LogBroker.MAX_OBJECT_SIZE:
@@ -377,6 +394,8 @@ class HbaseLogBackend(AbstractBackend):
             kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
             self.index(kk)
         return self.get(key)
+    def delete(self, key):
+        self.connection.table('log').delete(key)
     def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
         table = self.connection.table('index')
         keys = []
@@ -392,6 +411,8 @@ class HbaseLogBackend(AbstractBackend):
     def index(self, key):
         self.connection.table('index').put(key, {'f:vv':'1'})
         return key
+    def delete_index(self, key):
+        self.connection.table('index').delete(key)
 
 class ModelLogBackend(AbstractBackend):
     def get(self, key):
@@ -405,6 +426,8 @@ class ModelLogBackend(AbstractBackend):
             kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
             self.index(kk)
         return self.get(key)
+    def delete(self, key):
+        Log.objects.filter(key=key).delete()
     def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
         keys = []
         if prefix:
@@ -419,3 +442,5 @@ class ModelLogBackend(AbstractBackend):
     def index(self, key):
         obj, new = Index.objects.get_or_create(key=key)
         return obj.key
+    def delete_index(self, key):
+        Index.objects.filter(key=key).delete()
