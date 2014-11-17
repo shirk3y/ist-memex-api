@@ -116,10 +116,9 @@ class ArtifactBroker(GenericRecordBroker):
         doc = self.deserialize(data)
         return doc
 
-    def save(self, doc, key = None, update = False):
-        if update:
-            self.delete_indices(key)
+    def save(self, doc, key = None):
         doc, key = self.validate(doc, key)
+        self.delete_indices(key)
         data = self.serialize(doc)
         dataSize = sys.getsizeof(data)
         if dataSize > ArtifactBroker.MAX_OBJECT_SIZE:

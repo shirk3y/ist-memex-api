@@ -20,10 +20,9 @@ class GenericRecordBroker(object):
         data = self.backend.get(key)
         return self.deserialize(data)
 
-    def save(self, doc, key = None, update = False):
-        if update:
-            self.delete_indices(key)
+    def save(self, doc, key = None):
         doc, key = self.validate(doc, key)
+        self.delete_indices(key)
         self.backend.put(key, self.serialize(doc), doc['indices'])
         return self.get(key)
 
