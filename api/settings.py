@@ -20,7 +20,7 @@ SITE_ID = int(os.environ.get('MEMEX_API_SITE_ID', '1'))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'xpje7*g@ok-fj!9-(%2d=q8bx31o5e#y%%q*8sktccosqp8p%k'
+SECRET_KEY = os.environ.get('MEMEX_API_SECRET_KEY', 'xpje7*g@ok-fj!9-(%2d=q8bx31o5e#y%%q*8sktccosqp8p%k')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (os.environ.get('MEMEX_API_DEBUG', 'True') == 'True')
