@@ -14,6 +14,15 @@ Links to `Production` in the examples require access to the Memex VPN
 Memex API requests must be authenticated with an API key, included in the Authorization header: 
 + Authorization (required, string) ... API key authorization string, format is "Token `apiKey`". See docs on [TokenAuthentication](http://www.django-rest-framework.org/api-guide/authentication.html#tokenauthentication) for more information.
 
+# Version
+## Item [/]
+### API Version [GET]
+
++ Response 200
+        {
+            "version": "2.3"
+        }
+
 # Group Logging 
 Logging resources of the **Memex API**
 
