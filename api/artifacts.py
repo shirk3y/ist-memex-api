@@ -296,7 +296,7 @@ class HbaseFlatArtifactBackend(AbstractBackend):
 
     def get(self, key):
         row = self.connection.table('artifact').row(key)
-        data = self.unpack(row)
+        data = self.unpack(row, key)
         return data
 
     def put(self, key, data, indices=[]):
@@ -331,7 +331,47 @@ class HbaseFlatArtifactBackend(AbstractBackend):
         self.connection.table('artifact_index').delete(key)
 
     def pack(self, data):
-        return {'f:vv': zlib.compress(cbor.dumps(data))}
+        request = data.get('request', {})
+        response = data.get('response', {})
+        indices = data.get('indices', [])
+        row = {
+            'f:url': data.get('url'),
+            'f:timestamp': str(data.get('timestamp')),
+            'f:request.method': request.get('method'),
+            'f:request.client': zlib.compress(cbor.dumps(request.get('client', {}))),
+            'f:request.headers': zlib.compress(cbor.dumps(request.get('headers', {}))),
+            'f:request.body': zlib.compress(cbor.dumps(request.get('body', {}))),
+            'f:response.status': response.get('status'),
+            'f:response.server': zlib.compress(cbor.dumps(response.get('server', {}))),
+            'f:response.headers': zlib.compress(cbor.dumps(response.get('headers', {}))),
+            'f:response.body': zlib.compress(cbor.dumps(response.get('body', {}))),
+        }
+        for ii in indices:
+            kk = 'f:index.{}'.format(ii['key'])
+            row[kk] = ii['value']
+        return row
 
-    def unpack(self, row):
-        return cbor.loads(zlib.decompress(row['f:vv']))
+    def unpack(self, row, key):
+        data = {
+            'key': key,
+            'url': row['f:url'],
+            'timestamp': int(row['f:timestamp']),
+            'request': {
+                'method': row['f:request.method'],
+                'client': cbor.loads(zlib.decompress(row['f:request.client'])),
+                'headers': cbor.loads(zlib.decompress(row['f:request.headers'])),
+                'body': cbor.loads(zlib.decompress(row['f:request.body'])),
+            },
+            'response': {
+                'status': row['f:response.status'],
+                'server': cbor.loads(zlib.decompress(row['f:response.server'])),
+                'headers': cbor.loads(zlib.decompress(row['f:response.headers'])),
+                'body': cbor.loads(zlib.decompress(row['f:response.body'])),
+            },
+            'indices': [],
+        }
+        for kk, vv in row.items():
+            if kk.startswith('f:index.'):
+                key = kk.replace('f:index.', '')
+                data['indices'].append({'key':key, 'value': vv})
+        return data
