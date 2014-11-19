@@ -1,6 +1,8 @@
 import sys
 import time
 import re
+import zlib
+import cbor
 import happybase
 import jsonschema
 
@@ -30,7 +32,7 @@ class ArtifactList(APIView):
         return Response(response)
     def post(self, request, format=None):
         broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
-        response = broker.save(request.DATA)
+        response = broker.strip_indices(broker.save(request.DATA))
         return Response(response)
 
 class ArtifactItem(APIView):
@@ -41,7 +43,7 @@ class ArtifactItem(APIView):
         return Response(response)
     def put(self, request, key, format=None):
         broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
-        response = broker.save(request.DATA, key)
+        response = broker.strip_indices(broker.save(request.DATA, key))
         return Response(response)
     def delete(self, request, key, format=None):
         broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
@@ -110,6 +112,18 @@ class ArtifactBroker(GenericRecordBroker):
     }
 
     MAX_OBJECT_SIZE = 5 * 1024 * 1024 #5MB
+
+    def serialize(self, doc):
+        if self.backend.SERDE:
+            return zlib.compress(cbor.dumps(doc))
+        else:
+            return doc
+
+    def deserialize(self, data):
+        if self.backend.SERDE:
+            return cbor.loads(zlib.decompress(data))
+        else:
+            return data
 
     def get(self, key):
         data = self.backend.get(key)
@@ -205,6 +219,9 @@ class ArtifactBroker(GenericRecordBroker):
         return doc
 
 class HbaseArtifactBackend(AbstractBackend):
+    
+    SERDE = True
+
     def __init__(self):
         self.connection = happybase.Connection(host=settings.HBASE_HOST, port=int(settings.HBASE_PORT), table_prefix=settings.HBASE_TABLE_PREFIX)
     def get(self, key):
@@ -237,6 +254,9 @@ class HbaseArtifactBackend(AbstractBackend):
         self.connection.table('artifact_index').delete(key)
 
 class ModelArtifactBackend(AbstractBackend):
+
+    SERDE = True 
+
     def get(self, key):
         obj = Artifact.objects.get(key=key)
         return obj.data
@@ -266,3 +286,52 @@ class ModelArtifactBackend(AbstractBackend):
         return obj.key
     def delete_index(self, key):
         ArtifactIndex.objects.filter(key=key).delete()
+
+class HbaseFlatArtifactBackend(AbstractBackend):
+
+    SERDE = False
+
+    def __init__(self):
+        self.connection = happybase.Connection(host=settings.HBASE_HOST, port=int(settings.HBASE_PORT), table_prefix=settings.HBASE_TABLE_PREFIX)
+
+    def get(self, key):
+        row = self.connection.table('artifact').row(key)
+        data = self.unpack(row)
+        return data
+
+    def put(self, key, data, indices=[]):
+        row = self.pack(data)
+        self.connection.table('artifact').put(key, row)
+        for index in indices:
+            kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
+            self.index(kk)
+        return self.get(key)
+
+    def delete(self, key):
+        self.connection.table('artifact').delete(key)
+
+    def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
+        table = self.connection.table('artifact_index')
+        keys = []
+        if prefix:
+            for key, data in table.scan(row_prefix=prefix, limit=limit):
+                kk = key.split("__")[-1]
+                keys.append(kk)
+        elif start and stop:
+            for key, data in table.scan(row_start=start, row_stop=stop, limit=limit):    
+                kk = key.split("__")[-1]
+                keys.append(kk)
+        return keys
+
+    def index(self, key):
+        self.connection.table('artifact_index').put(key, {'f:vv':'1'})
+        return key
+
+    def delete_index(self, key):
+        self.connection.table('artifact_index').delete(key)
+
+    def pack(self, data):
+        return {'f:vv': zlib.compress(cbor.dumps(data))}
+
+    def unpack(self, row):
+        return cbor.loads(zlib.decompress(row['f:vv']))

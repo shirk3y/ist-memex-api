@@ -31,7 +31,7 @@ class LogList(APIView):
         return Response(response)
     def post(self, request, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
-        response = broker.save(request.DATA)
+        response = broker.strip_indices(broker.save(request.DATA))
         return Response(response)
 
 class LogItem(APIView):
@@ -42,7 +42,7 @@ class LogItem(APIView):
         return Response(response)
     def put(self, request, key, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
-        response = broker.save(request.DATA, key)
+        response = broker.strip_indices(broker.save(request.DATA, key))
         return Response(response)
     def delete(self, request, key, format=None):
         broker = LogBroker(settings.API_LOG_MANAGER_BACKEND)
