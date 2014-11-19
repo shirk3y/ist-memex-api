@@ -83,9 +83,41 @@ class ArtifactBroker(GenericRecordBroker):
             },
             "request": {
                 "type": "object",
+                "properties": {
+                    "method": {
+                        "enum": [ 
+                            "get", 
+                            "put", 
+                            "post", 
+                            "delete", 
+                            "head", 
+                            "options", 
+                            "GET", 
+                            "PUT", 
+                            "POST", 
+                            "DELETE", 
+                            "HEAD", 
+                            "OPTIONS", 
+                        ],
+                    },
+                }, 
+                "required": [
+                    "method",
+                ],
             },
             "response": {
                 "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "number",
+                        "minimum": 100,
+                        "maximum": 999,
+                        "multipleOf": 1.0,
+                    },
+                },
+                "required": [
+                    "status",
+                ],
             },
             "indices": {
                "type": "array",
@@ -341,14 +373,20 @@ class HbaseFlatArtifactBackend(AbstractBackend):
             'f:request.client': zlib.compress(cbor.dumps(request.get('client', {}))),
             'f:request.headers': zlib.compress(cbor.dumps(request.get('headers', {}))),
             'f:request.body': zlib.compress(cbor.dumps(request.get('body', {}))),
-            'f:response.status': response.get('status'),
-            'f:response.server': zlib.compress(cbor.dumps(response.get('server', {}))),
+            'f:response.status': str(response.get('status')),
+            'f:response.server.hostname': response.get('server', {}).get('hostname'),
+            'f:response.server.address': response.get('server', {}).get('address'),
             'f:response.headers': zlib.compress(cbor.dumps(response.get('headers', {}))),
             'f:response.body': zlib.compress(cbor.dumps(response.get('body', {}))),
         }
+        keys = {}
         for ii in indices:
             kk = 'f:index.{}'.format(ii['key'])
-            row[kk] = ii['value']
+            try:
+                keys[kk] += 1
+            except KeyError:
+                keys[kk] = 0
+            row["{}.{}".format(kk, str(keys[kk]))] = ii['value']
         return row
 
     def unpack(self, row, key):
@@ -363,15 +401,18 @@ class HbaseFlatArtifactBackend(AbstractBackend):
                 'body': cbor.loads(zlib.decompress(row['f:request.body'])),
             },
             'response': {
-                'status': row['f:response.status'],
-                'server': cbor.loads(zlib.decompress(row['f:response.server'])),
+                'status': int(row['f:response.status']),
+                'server': {
+                    'hostname': row['f:response.server.hostname'],
+                    'address': row['f:response.server.address'],
+                },
                 'headers': cbor.loads(zlib.decompress(row['f:response.headers'])),
                 'body': cbor.loads(zlib.decompress(row['f:response.body'])),
             },
             'indices': [],
         }
         for kk, vv in row.items():
-            if kk.startswith('f:index.'):
-                key = kk.replace('f:index.', '')
-                data['indices'].append({'key':key, 'value': vv})
+            mm = re.match(r"^f:index\.(?P<key>.*)\.[0-9]+$", kk)
+            if mm is not None:
+                data['indices'].append({'key':mm.group('key'), 'value': vv})
         return data
