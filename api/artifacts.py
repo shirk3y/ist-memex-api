@@ -131,6 +131,27 @@ class ArtifactBroker(GenericRecordBroker):
         ],
     }
 
+    INDEX_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
+                },
+                "value": {
+                    "type": "string",
+                    "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
+                },
+            },
+            "required": [
+                "key",
+                "value",
+            ],
+        },
+    }
+
     MAX_OBJECT_SIZE = 5 * 1024 * 1024 #5MB
 
     def serialize(self, doc):
@@ -185,6 +206,15 @@ class ArtifactBroker(GenericRecordBroker):
 
         doc, key = self.validate_key(doc, key)
         doc = self.validate_timestamp(doc)
+
+        indices = []
+        for idx in doc['indices']:
+            try:
+                jsonschema.validate(idx, ArtifactBroker.INDEX_SCHEMA)
+                indices.append(idx)
+            except:
+                pass
+        doc['indices'] = indices
 
         jsonschema.validate(doc, ArtifactBroker.SCHEMA)
         return doc, key
