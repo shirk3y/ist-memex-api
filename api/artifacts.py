@@ -85,20 +85,8 @@ class ArtifactBroker(GenericRecordBroker):
                 "type": "object",
                 "properties": {
                     "method": {
-                        "enum": [ 
-                            "get", 
-                            "put", 
-                            "post", 
-                            "delete", 
-                            "head", 
-                            "options", 
-                            "GET", 
-                            "PUT", 
-                            "POST", 
-                            "DELETE", 
-                            "HEAD", 
-                            "OPTIONS", 
-                        ],
+                        "type": "string",
+                        "pattern": "^[a-zA-Z]+$",
                     },
                 }, 
                 "required": [
