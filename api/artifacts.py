@@ -31,8 +31,14 @@ class ArtifactList(APIView):
                 response.append(doc)
         return Response(response)
     def post(self, request, format=None):
+        response = None
         broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
-        response = broker.strip_indices(broker.save(request.DATA))
+        if type(request.DATA) is list:
+            response = []
+            for data in request.DATA: 
+                response.append(broker.strip_indices(broker.save(data)))
+        else:
+            response = broker.strip_indices(broker.save(request.DATA))
         return Response(response)
 
 class ArtifactItem(APIView):
