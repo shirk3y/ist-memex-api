@@ -138,24 +138,21 @@ class ArtifactBroker(GenericRecordBroker):
     }
 
     INDEX_SCHEMA = {
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string",
-                    "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
-                },
-                "value": {
-                    "type": "string",
-                    "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
-                },
+        "type": "object",
+        "properties": {
+            "key": {
+                "type": "string",
+                "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
             },
-            "required": [
-                "key",
-                "value",
-            ],
+            "value": {
+                "type": "string",
+                "pattern": "^[0-9a-zA-Z$.!*()_+-]{1,48}$" ,
+            },
         },
+        "required": [
+            "key",
+            "value",
+        ],
     }
 
     MAX_OBJECT_SIZE = 5 * 1024 * 1024 #5MB
