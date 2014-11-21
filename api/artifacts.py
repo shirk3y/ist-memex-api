@@ -283,7 +283,7 @@ class HbaseArtifactBackend(AbstractBackend):
     def put(self, key, data, indices=[]):
         self.connection.table('artifact').put(key, {'f:vv':data})
         for index in indices:
-            kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
+            kk = "{}__{}__{}".format(index['key'], index['value'], key)
             self.index(kk)
         return self.get(key)
     def delete(self, key):
@@ -318,7 +318,7 @@ class ModelArtifactBackend(AbstractBackend):
         obj.data = data
         obj.save()
         for index in indices:
-            kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
+            kk = "{}__{}__{}".format(index['key'], index['value'], key)
             self.index(kk)
         return self.get(key)
     def delete(self, key):
@@ -356,7 +356,7 @@ class HbaseFlatArtifactBackend(AbstractBackend):
         row = self.pack(data)
         self.connection.table('artifact').put(key, row)
         for index in indices:
-            kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
+            kk = "{}__{}__{}".format(index['key'], index['value'], key)
             self.index(kk)
         return self.get(key)
 
