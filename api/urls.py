@@ -5,6 +5,8 @@ from logs import LogList, LogItem, LogSearch
 
 from artifacts import ArtifactList, ArtifactItem, ArtifactSearch
 
+from images import ImageItem
+
 urlpatterns = patterns('',
     url(r'^/?$', 'api.views.index'),
     url(r'^artifacts/?$', ArtifactList.as_view(), name='artifact-list'),
@@ -25,6 +27,8 @@ urlpatterns = patterns('',
             LogSearch.as_view(), name='log-search-prefix'),
     url(r'^logs/where/(?i)(?P<index>[0-9a-zA-Z$.!*()_+-]{1,48})/from/(?P<start>[0-9a-zA-Z$.!*()_+-]{1,160})/to/(?P<end>[0-9a-zA-Z$.!*()_+-]{1,160})/?$', 
             LogSearch.as_view(), name='log-search-range'),
+    url(r'^images/(?i)(?P<key>[0-9a-zA-Z$.!*()_/+-]{1,255})/?$',
+            ImageItem.as_view(), name='image-item'),
     url(r'^debug/?$', 'api.views.debug'),
     url(r'^admin/', include(admin.site.urls)),
 )

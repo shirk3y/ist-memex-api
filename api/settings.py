@@ -109,7 +109,12 @@ REST_FRAMEWORK = {
 
 API_LOG_MANAGER_BACKEND = os.environ.get('MEMEX_API_LOG_MANAGER_BACKEND', 'api.logs.ModelLogBackend')
 API_ARTIFACT_MANAGER_BACKEND = os.environ.get('MEMEX_API_ARTIFACT_MANAGER_BACKEND', 'api.artifacts.ModelArtifactBackend')
+API_IMAGE_MANAGER_BACKEND = os.environ.get('MEMEX_API_IMAGE_MANAGER_BACKEND', 'api.images.S3ImageBackend')
 
 HBASE_HOST = os.environ.get('MEMEX_API_HBASE_HOST', 'localhost')
 HBASE_PORT = os.environ.get('MEMEX_API_HBASE_PORT', '9090')
 HBASE_TABLE_PREFIX = os.environ.get('MEMEX_API_HBASE_TABLE_PREFIX', 'memex')
+
+S3_ACCESS_KEY = os.environ.get('MEMEX_API_S3_ACCESS_KEY', '')
+S3_SECRET_KEY = os.environ.get('MEMEX_API_S3_SECRET_KEY', '')
+S3_IMAGE_BUCKET = os.environ.get('MEMEX_API_S3_IMAGE_BUCKET', 'memex-images')
