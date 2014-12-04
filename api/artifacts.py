@@ -422,7 +422,7 @@ class HbaseFlatArtifactBackend(AbstractBackend):
                 'body': cbor.loads(zlib.decompress(row['f:request.body'])),
             },
             'response': {
-                'status': int(row['f:response.status']),
+                'status': row['f:response.status'],
                 'server': {
                     'hostname': row['f:response.server.hostname'],
                     'address': row['f:response.server.address'],
