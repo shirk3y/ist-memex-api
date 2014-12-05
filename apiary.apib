@@ -27,14 +27,14 @@ Memex API requests must be authenticated with an API key, included in the Author
 # Group Artifacts 
 Artifact resources of the **Memex API**
 
-Artifacts are identified by a RFC 4122-compliant UUID.
+Artifacts are identified by a `URL Key`, which consists of the elements of the FQDN in reverse order, followed by an MD5 hash of the entire URL, followed by a GMT epoch timestamp in milliseconds, with elements separated by an underscore.
 
-Discussion of activity types and logging detail specifics for various activity types can be found on the Memex wiki at: https://memexproxy.com/wiki/pages/viewpage.action?pageId=3310199
+Discussion of the artifact schema can be found on the Memex wiki at: https://memexproxy.com/wiki/display/MPM/Archiving+Content
     
 ## Collection [/artifacts{?limit,expand}]
 ### List recent Artifacts [GET]
 + Parameters
-    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 100.
     + expand (optional, boolean, `true`) ... If true, return full Artifact items; if false, just return keys. Defaults to false.
 + Response 200  (application/json)
 
