@@ -24,6 +24,306 @@ Memex API requests must be authenticated with an API key, included in the Author
             "version": "2.3"
         }
 
+# Group Artifacts 
+Artifact resources of the **Memex API**
+
+Artifacts are identified by a RFC 4122-compliant UUID.
+
+Discussion of activity types and logging detail specifics for various activity types can be found on the Memex wiki at: https://memexproxy.com/wiki/pages/viewpage.action?pageId=3310199
+    
+## Collection [/artifacts{?limit,expand}]
+### List recent Artifacts [GET]
++ Parameters
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `true`) ... If true, return full Artifact items; if false, just return keys. Defaults to false.
++ Response 200  (application/json)
+
+        
+        ["com_istresearch_b469181df4174469e3b676278a6db708_1416628696000"]
+
+
+## Collection [/artifacts]
+### Create an Artifact [POST]
++ Request (application/json)
+
+        {
+            "key": "com_istresearch_b469181df4174469e3b676278a6db708_1416628696000",
+            "url": "http:\/\/istresearch.com\/about",
+            "timestamp": "1416628696000",
+            "request": {
+                "method": "GET",
+                "client": {
+                    "hostname": "crawler01.local",
+                    "address": "68.107.129.200",
+                    "software": "Scrapy 0.24 http://scrapy.org/",
+                    "robots": "classic",
+                    "contact": {
+                        "name": "Marti Martinez",
+                        "email": "marti.martinez@istresearch.com"
+                    }
+                },
+                "headers": {
+                    "Accept": "text\/html,application\/xhtml+xml,application\/xml",
+                    "Accept-Encoding": "gzip,deflate,sdch",
+                    "Accept-Language": "en-US,en",
+                    "User-Agent": "Mozilla\/5.0"
+                },
+                "body": null
+            },
+            "response": {
+                "status": 200,
+                "server": {
+                    "hostname": "istresearch.com",
+                    "address": "65.39.205.61"
+                },
+                "headers": {
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "text\/html",
+                    "Date": "Sat, 22 Nov 2014 03:58:16 GMT",
+                    "Expires": "Sat, 22 Nov 2014 15:58:16 GMT",
+                    "Server": "nginx"
+                },
+                "body": "\r\n  <!DOCTYPE html PUBLIC ... \r\n\r\n  \r\n    </body>\r\n    </html>\r\n  \r\n\r\n"    
+            }
+        }
+        
++ Response 201 (application/json)
+
+        {
+            "key": "com_istresearch_b469181df4174469e3b676278a6db708_1416628696000",
+            "url": "http:\/\/istresearch.com\/about",
+            "timestamp": "1416628696000",
+            "request": {
+                "method": "GET",
+                "client": {
+                    "hostname": "crawler01.local",
+                    "address": "68.107.129.200",
+                    "software": "Scrapy 0.24 http://scrapy.org/",
+                    "robots": "classic",
+                    "contact": {
+                        "name": "Marti Martinez",
+                        "email": "marti.martinez@istresearch.com"
+                    }
+                },
+                "headers": {
+                    "Accept": "text\/html,application\/xhtml+xml,application\/xml",
+                    "Accept-Encoding": "gzip,deflate,sdch",
+                    "Accept-Language": "en-US,en",
+                    "User-Agent": "Mozilla\/5.0"
+                },
+                "body": null
+            },
+            "response": {
+                "status": 200,
+                "server": {
+                    "hostname": "istresearch.com",
+                    "address": "65.39.205.61"
+                },
+                "headers": {
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "text\/html",
+                    "Date": "Sat, 22 Nov 2014 03:58:16 GMT",
+                    "Expires": "Sat, 22 Nov 2014 15:58:16 GMT",
+                    "Server": "nginx"
+                },
+                "body": "\r\n  <!DOCTYPE html PUBLIC ... \r\n\r\n  \r\n    </body>\r\n    </html>\r\n  \r\n\r\n"    
+            },
+            "indices": [], 
+        }
+        
+## Item [/artifacts/{key}]
+A single Artifact item with all its details
+
++ Parameters
+    + key (required, string, `com_istresearch_b469181df4174469e3b676278a6db708_1416628696000`) ... URL `key` of the Artifact to retrieve. 
+
+### Retrieve a Artifact [GET]
++ Response 200 (application/json)
+
+        {
+            "key": "com_istresearch_b469181df4174469e3b676278a6db708_1416628696000",
+            "url": "http:\/\/istresearch.com\/about",
+            "timestamp": "1416628696000",
+            "request": {
+                "method": "GET",
+                "client": {
+                    "hostname": "crawler01.local",
+                    "address": "68.107.129.200",
+                    "software": "Scrapy 0.24 http://scrapy.org/",
+                    "robots": "classic",
+                    "contact": {
+                        "name": "Marti Martinez",
+                        "email": "marti.martinez@istresearch.com"
+                    }
+                },
+                "headers": {
+                    "Accept": "text\/html,application\/xhtml+xml,application\/xml",
+                    "Accept-Encoding": "gzip,deflate,sdch",
+                    "Accept-Language": "en-US,en",
+                    "User-Agent": "Mozilla\/5.0"
+                },
+                "body": null
+            },
+            "response": {
+                "status": 200,
+                "server": {
+                    "hostname": "istresearch.com",
+                    "address": "65.39.205.61"
+                },
+                "headers": {
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "text\/html",
+                    "Date": "Sat, 22 Nov 2014 03:58:16 GMT",
+                    "Expires": "Sat, 22 Nov 2014 15:58:16 GMT",
+                    "Server": "nginx"
+                },
+                "body": "\r\n  <!DOCTYPE html PUBLIC ... \r\n\r\n  \r\n    </body>\r\n    </html>\r\n  \r\n\r\n"    
+            },
+            "indices": [], 
+        }
+        
+### Create a Artifact [PUT]
++ Request (application/json)
+
+        {
+            "key": "com_istresearch_b469181df4174469e3b676278a6db708_1416628696000",
+            "url": "http:\/\/istresearch.com\/about",
+            "timestamp": "1416628696000",
+            "request": {
+                "method": "GET",
+                "client": {
+                    "hostname": "crawler01.local",
+                    "address": "68.107.129.200",
+                    "software": "Scrapy 0.24 http://scrapy.org/",
+                    "robots": "classic",
+                    "contact": {
+                        "name": "Marti Martinez",
+                        "email": "marti.martinez@istresearch.com"
+                    }
+                },
+                "headers": {
+                    "Accept": "text\/html,application\/xhtml+xml,application\/xml",
+                    "Accept-Encoding": "gzip,deflate,sdch",
+                    "Accept-Language": "en-US,en",
+                    "User-Agent": "Mozilla\/5.0"
+                },
+                "body": null
+            },
+            "response": {
+                "status": 200,
+                "server": {
+                    "hostname": "istresearch.com",
+                    "address": "65.39.205.61"
+                },
+                "headers": {
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "text\/html",
+                    "Date": "Sat, 22 Nov 2014 03:58:16 GMT",
+                    "Expires": "Sat, 22 Nov 2014 15:58:16 GMT",
+                    "Server": "nginx"
+                },
+                "body": "\r\n  <!DOCTYPE html PUBLIC ... \r\n\r\n  \r\n    </body>\r\n    </html>\r\n  \r\n\r\n"    
+            }
+        }
+
+        
++ Response 201 (application/json)
+
+        {
+            "key": "com_istresearch_b469181df4174469e3b676278a6db708_1416628696000",
+            "url": "http:\/\/istresearch.com\/about",
+            "timestamp": "1416628696000",
+            "request": {
+                "method": "GET",
+                "client": {
+                    "hostname": "crawler01.local",
+                    "address": "68.107.129.200",
+                    "software": "Scrapy 0.24 http://scrapy.org/",
+                    "robots": "classic",
+                    "contact": {
+                        "name": "Marti Martinez",
+                        "email": "marti.martinez@istresearch.com"
+                    }
+                },
+                "headers": {
+                    "Accept": "text\/html,application\/xhtml+xml,application\/xml",
+                    "Accept-Encoding": "gzip,deflate,sdch",
+                    "Accept-Language": "en-US,en",
+                    "User-Agent": "Mozilla\/5.0"
+                },
+                "body": null
+            },
+            "response": {
+                "status": 200,
+                "server": {
+                    "hostname": "istresearch.com",
+                    "address": "65.39.205.61"
+                },
+                "headers": {
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "text\/html",
+                    "Date": "Sat, 22 Nov 2014 03:58:16 GMT",
+                    "Expires": "Sat, 22 Nov 2014 15:58:16 GMT",
+                    "Server": "nginx"
+                },
+                "body": "\r\n  <!DOCTYPE html PUBLIC ... \r\n\r\n  \r\n    </body>\r\n    </html>\r\n  \r\n\r\n"    
+            },
+            "indices": [], 
+        }   
+
+### Delete a Artifact [DELETE]
++ Response 200
+
+## Search [/artifacts/where/{key}/is/{value}{?limit,expand}]
+A list of Artifact items matching a given attribute/value pair
+
++ Parameters
+    + key (required, string, `source`) ... Attribute key
+    + value (required, string, `10.3.2.30`) ... Attribute value   
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `false`) ... If true, return full Artifact items; if false, just return keys. Defaults to false.
+
+### Search by Attribute - Exact Match [GET]
++ Response 200 (application/json)
+
+    + Body
+
+            ["com_istresearch_b469181df4174469e3b676278a6db708_1416628696000"]
+        
+## Search [/artifacts/where/{key}/like/{prefix}{?limit,expand}]
+A list of Artifact items with a given attribute starting with a specified prefix
+
++ Parameters
+    + key (required, string, `source`) ... Attribute key
+    + prefix (required, string, `10.3.`) ... Attribute value prefix
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `false`) ... If true, return full Artifact items; if false, just return keys. Defaults to false.
+
+### Search by Attribute - Prefix Match  [GET]
++ Response 200 (application/json)
+
+    + Body
+
+            ["com_istresearch_b469181df4174469e3b676278a6db708_1416628696000"]
+        
+## Search [/artifacts/where/{key}/from/{start}/to/{stop}{?limit,expand}]
+A list of Artifact items with a given attribute in a specified lexicographic range
+
++ Parameters
+    + key (required, string, `source`) ... Attribute key
+    + start (required, string, `10.3.`) ... Starting attribute value
+    + stop (required, string, `10.4.`) ... Ending attribute value
+    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
+    + expand (optional, boolean, `false`) ... If true, return full Artifact items; if false, just return keys. Defaults to false.
+
+### Search by Attribute - Range Match [GET]
++ Response 200 (application/json)
+
+    + Body
+
+            ["com_istresearch_b469181df4174469e3b676278a6db708_1416628696000"]
+        
+                                                
 # Group Logging 
 Logging resources of the **Memex API**
 
