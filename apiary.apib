@@ -324,6 +324,35 @@ A list of Artifact items with a given attribute in a specified lexicographic ran
             ["com_istresearch_b469181df4174469e3b676278a6db708_1416628696000"]
         
                                                 
+# Group Images 
+Image resources of the **Memex API**
+
+Images are identified by a `URL Key`, which consists of the elements of the FQDN in reverse order, followed by an MD5 hash of the entire URL, followed by a GMT epoch timestamp in milliseconds, with elements separated by an underscore. This URL key is suffixed with an appropriate file extension denoting the image format, eg ".png".
+       
+## Item [/images/{key}]
+A single Image item with all its details
+
++ Parameters
+    + key (required, string, `com_squarespace_static_cbdf080a79350caf35f9544e397a991d_1416628696000.jpg`) ... URL `key` of the Image to retrieve. 
+
+### Retrieve a Image [GET]
++ Response 200 (application/json)
+
+        [Binary Image Data]
+        
+### Create a Image [PUT]
++ Request (application/x-www-form-urlencoded)
+
+        data=[Binary Image Data]  
+
+        
++ Response 201 (application/json)
+
+        [Binary Image Data]   
+
+### Delete a Image [DELETE]
++ Response 200
+
 # Group Logging 
 Logging resources of the **Memex API**
 
