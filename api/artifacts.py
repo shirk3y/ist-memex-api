@@ -346,6 +346,9 @@ class HbaseFlatArtifactBackend(AbstractBackend):
 
     def __init__(self):
         self.connection = happybase.Connection(host=settings.HBASE_HOST, port=int(settings.HBASE_PORT), table_prefix=settings.HBASE_TABLE_PREFIX)
+        self.mirror = None
+        if settings.HBASE_MIRROR_HOST is not None:
+            self.mirror = happybase.Connection(host=settings.HBASE_MIRROR_HOST, port=int(settings.HBASE_MIRROR_PORT), table_prefix=settings.HBASE_MIRROR_TABLE_PREFIX)
 
     def get(self, key):
         row = self.connection.table('artifact').row(key)
@@ -355,6 +358,8 @@ class HbaseFlatArtifactBackend(AbstractBackend):
     def put(self, key, data, indices=[]):
         row = self.pack(data)
         self.connection.table('artifact').put(key, row)
+        if self.mirror:
+            self.mirror.table('artifact').put(key, row)
         for index in indices:
             kk = "{}__{}__{}".format(index['key'], index['value'], key)
             self.index(kk)
@@ -362,6 +367,8 @@ class HbaseFlatArtifactBackend(AbstractBackend):
 
     def delete(self, key):
         self.connection.table('artifact').delete(key)
+        if self.mirror:
+            self.mirror.table('artifact').delete(key)
 
     def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
         table = self.connection.table('artifact_index')
@@ -378,10 +385,14 @@ class HbaseFlatArtifactBackend(AbstractBackend):
 
     def index(self, key):
         self.connection.table('artifact_index').put(key, {'f:vv':'1'})
+        if self.mirror:
+            self.mirror.table('artifact_index').put(key, {'f:vv':'1'})
         return key
 
     def delete_index(self, key):
         self.connection.table('artifact_index').delete(key)
+        if self.mirror:
+            self.mirror.table('artifact_index').delete(key)
 
     def pack(self, data):
         request = data.get('request', {})
