@@ -2,6 +2,7 @@ import sys
 import time
 import re
 import uuid
+import hashlib
 import happybase
 import jsonschema
 
@@ -216,6 +217,13 @@ class LogBroker(GenericRecordBroker):
                     },
                 },
             },
+            "relationships": {
+	    	"type": "array",
+		"items": {
+		    "type": "string",
+                    "minLength": 1,
+		},
+            },
             "details": { },
         },
         "required": [
@@ -241,8 +249,20 @@ class LogBroker(GenericRecordBroker):
         dataSize = sys.getsizeof(data)
         if dataSize > LogBroker.MAX_OBJECT_SIZE:
             raise ValidationError("Object data size ({dataSize} bytes) exceeds max object size ({maxSize} bytes)".format(dataSize=dataSize, maxSize=LogBroker.MAX_OBJECT_SIZE))
-        self.backend.put(key, data, doc['indices'])
+        self.backend.put(key, data, doc['indices'], doc['relationships'])
         return self.get(key)
+
+    def delete_indices(self, key):
+        try:
+            doc = self.get(key)
+            for ii in doc.get('indices', []):
+                kk = "{}__{}__{}".format(ii['key'], ii['value'], key)
+                self.backend.delete_index(kk)
+            for rel in doc.get('relationships', []):
+                kk = "rel__{}__{}".format(hashlib.md5(rel).hexdigest(), key)
+                self.backend.delete_index(kk)
+        except:
+            pass
 
     def search(self, index, value=None, prefix=None, start=None, end=None, limit=None, expand=False):
         if index in ('time.startedAt', 'time.endedAt'):
@@ -266,6 +286,7 @@ class LogBroker(GenericRecordBroker):
     def validate(self, doc, key = None):
 
         doc['indices'] = doc.get('indices', [])
+        doc['relationships'] = doc.get('relationships', [])
 
         doc, key = self.validate_key(doc, key)
         doc = self.validate_time(doc)
@@ -394,10 +415,13 @@ class HbaseLogBackend(AbstractBackend):
     def get(self, key):
         row = self.connection.table('log').row(key)
         return row['f:vv']
-    def put(self, key, data, indices=[]):
+    def put(self, key, data, indices=[], relationships=[]):
         self.connection.table('log').put(key, {'f:vv':data})
         for index in indices:
             kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
+            self.index(kk)
+	for rel in relationships:
+	    kk = "rel__{rel_hash}__{key}".format(rel_hash=hashlib.md5(rel).hexdigest(), key=key)
             self.index(kk)
         return self.get(key)
     def delete(self, key):
@@ -430,6 +454,9 @@ class ModelLogBackend(AbstractBackend):
         obj.save()
         for index in indices:
             kk = "{index_key}__{index_value}__{key}".format(index_key=index['key'], index_value=index['value'], key=key)
+            self.index(kk)
+	for rel in relationships:
+	    kk = "rel__{rel_hash}__{key}".format(rel_hash=hashlib.md5(rel).hexdigest(), key=key)
             self.index(kk)
         return self.get(key)
     def delete(self, key):
