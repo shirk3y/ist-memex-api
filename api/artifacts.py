@@ -348,7 +348,10 @@ class HbaseFlatArtifactBackend(AbstractBackend):
         self.connection = happybase.Connection(host=settings.HBASE_HOST, port=int(settings.HBASE_PORT), table_prefix=settings.HBASE_TABLE_PREFIX)
         self.mirror = None
         if settings.HBASE_MIRROR_HOST is not None:
-            self.mirror = happybase.Connection(host=settings.HBASE_MIRROR_HOST, port=int(settings.HBASE_MIRROR_PORT), table_prefix=settings.HBASE_MIRROR_TABLE_PREFIX)
+	    try:
+                self.mirror = happybase.Connection(host=settings.HBASE_MIRROR_HOST, port=int(settings.HBASE_MIRROR_PORT), table_prefix=settings.HBASE_MIRROR_TABLE_PREFIX)
+            except:
+		pass
 
     def get(self, key):
         row = self.connection.table('artifact').row(key)
