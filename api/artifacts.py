@@ -202,26 +202,19 @@ class ArtifactBroker(GenericRecordBroker):
                 end = str(int(_end)+1)
                 start = _start
         if index == 'adjacent' and adjacent is not None:
-            key = adjacent.split("_")[-1]
-            try:
-                timestamp = self.flip_timestamp(key)
-            except ValueError:
-                try:
-                    data = self.backend.get(adjacent)
-                    doc = self.deserialize(data)
-                    timestamp = doc.get('timestamp', None)
-                except:
-                    timestamp = None
-            if timestamp is None:
-                return []
-            start = 'timestamp__{}'.format(timestamp)
+            data = self.backend.get(adjacent)
+            doc = self.deserialize(data)
+            timestamp = doc['timestamp']
+            flip = self.flip_timestamp(timestamp)
             result = {}
             try:
+                start = 'timestamp__{}'.format(flip)
                 result["before"] = self.backend.scan(start=start, limit=2)[1]
             except IndexError:
                 pass
             try:
-                result["after"] = self.backend.scan(start=adjacent, limit=2, table='artifact')[1]
+                start = 'ts__{}'.format(timestamp)
+                result["after"] = self.backend.scan(start=start, limit=2)[1]
             except IndexError:
                 pass
             return [result,]
@@ -268,6 +261,7 @@ class ArtifactBroker(GenericRecordBroker):
         except:
             raise ValidationError("Parser error: '{ts}' could not interpreted as a timestamp".format(ts=ts))
         self.add_index(doc, 'timestamp', self.flip_timestamp(doc['timestamp']))
+        self.add_index(doc, 'ts', str(doc['timestamp']))
         return doc
 
     def flip_timestamp(self, ts):
@@ -287,7 +281,7 @@ class ArtifactBroker(GenericRecordBroker):
             pass
 
     def strip_indices(self, doc):
-        internal_indices = ('timestamp',)
+        internal_indices = ('timestamp','ts')
         indices = doc.get('indices')
         doc['indices'] = []
         for entry in indices:
@@ -397,8 +391,8 @@ class HbaseFlatArtifactBackend(AbstractBackend):
         if self.mirror:
             self.mirror.table('artifact').delete(key)
 
-    def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False, table='artifact_index'):
-        table = self.connection.table(table)
+    def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
+        table = self.connection.table('artifact_index')
         keys = []
         if prefix:
             for key, data in table.scan(row_prefix=prefix, limit=limit):
