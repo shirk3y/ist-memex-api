@@ -57,11 +57,11 @@ class ArtifactItem(APIView):
         return Response(response)
 
 class ArtifactSearch(APIView):
-    def get(self, request, index, value=None, prefix=None, start=None, end=None, format=None):
+    def get(self, request, index, value=None, prefix=None, start=None, end=None, adjacent=None, format=None):
         limit = int(request.QUERY_PARAMS.get('limit', 1000))
         expand = bool(request.QUERY_PARAMS.get('expand', False))
         broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
-        docs = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, limit=limit, expand=expand)
+        docs = broker.search(index=index, value=value, prefix=prefix, start=start, end=end, adjacent=adjacent, limit=limit, expand=expand)
         response = []
         for doc in docs:
             if expand:
@@ -184,7 +184,7 @@ class ArtifactBroker(GenericRecordBroker):
         self.backend.put(key, data, doc['indices'])
         return self.get(key)
 
-    def search(self, index, value=None, prefix=None, start=None, end=None, limit=None, expand=False):
+    def search(self, index, value=None, prefix=None, start=None, end=None, adjacent=None, limit=None, expand=False):
         if index in ('timestamp'):
             if value:
                 try:
@@ -201,6 +201,30 @@ class ArtifactBroker(GenericRecordBroker):
                 _start = self.flip_timestamp(end)
                 end = str(int(_end)+1)
                 start = _start
+        if index == 'adjacent' and adjacent is not None:
+            key = adjacent.split("_")[-1]
+            try:
+                timestamp = self.flip_timestamp(key)
+            except ValueError:
+                try:
+                    data = self.backend.get(adjacent)
+                    doc = self.deserialize(data)
+                    timestamp = doc.get('timestamp', None)
+                except:
+                    timestamp = None
+            if timestamp is None:
+                return []
+            start = 'timestamp__{}'.format(timestamp)
+            results = []
+            try:
+                results.append(self.backend.scan(start=start, limit=2)[1])
+            except IndexError:
+                pass
+            try:
+                results.append(self.backend.scan(start=adjacent, limit=2, table='artifact')[1])
+            except IndexError:
+                pass
+            return results
         return GenericRecordBroker.search(self, index, value, prefix, start, end, limit, expand)
 
     def validate(self, doc, key = None):
@@ -295,7 +319,7 @@ class HbaseArtifactBackend(AbstractBackend):
             for key, data in table.scan(row_prefix=prefix, limit=limit):
                 kk = key.split("__")[-1]
                 keys.append(kk)
-        elif start and stop:
+        elif start:
             for key, data in table.scan(row_start=start, row_stop=stop, limit=limit):    
                 kk = key.split("__")[-1]
                 keys.append(kk)
@@ -373,14 +397,14 @@ class HbaseFlatArtifactBackend(AbstractBackend):
         if self.mirror:
             self.mirror.table('artifact').delete(key)
 
-    def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False):
-        table = self.connection.table('artifact_index')
+    def scan(self, prefix=None, start=None, stop=None, limit=None, expand=False, table='artifact_index'):
+        table = self.connection.table(table)
         keys = []
         if prefix:
             for key, data in table.scan(row_prefix=prefix, limit=limit):
                 kk = key.split("__")[-1]
                 keys.append(kk)
-        elif start and stop:
+        elif start:
             for key, data in table.scan(row_start=start, row_stop=stop, limit=limit):    
                 kk = key.split("__")[-1]
                 keys.append(kk)
