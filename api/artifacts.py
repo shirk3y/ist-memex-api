@@ -215,16 +215,16 @@ class ArtifactBroker(GenericRecordBroker):
             if timestamp is None:
                 return []
             start = 'timestamp__{}'.format(timestamp)
-            results = []
+            result = {}
             try:
-                results.append(self.backend.scan(start=start, limit=2)[1])
+                result["before"] = self.backend.scan(start=start, limit=2)[1]
             except IndexError:
                 pass
             try:
-                results.append(self.backend.scan(start=adjacent, limit=2, table='artifact')[1])
+                result["after"] = self.backend.scan(start=adjacent, limit=2, table='artifact')[1]
             except IndexError:
                 pass
-            return results
+            return [result,]
         return GenericRecordBroker.search(self, index, value, prefix, start, end, limit, expand)
 
     def validate(self, doc, key = None):
