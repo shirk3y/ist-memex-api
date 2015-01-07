@@ -208,13 +208,21 @@ class ArtifactBroker(GenericRecordBroker):
             flip = self.flip_timestamp(timestamp)
             result = {}
             try:
-                start = 'timestamp__{}'.format(flip)
-                result["before"] = self.backend.scan(start=start, limit=2)[1]
+                before = 'timestamp__{}'.format(flip)
+                before_key = self.backend.scan(start=before, limit=2)[1]
+                before_data = self.backend.get(before_key)
+                before_doc = self.deserialize(before_data)
+                if before_doc['timestamp'] < timestamp:
+                    result["before"] = before_key
             except IndexError:
                 pass
             try:
-                start = 'ts__{}'.format(timestamp)
-                result["after"] = self.backend.scan(start=start, limit=2)[1]
+                after = 'ts__{}'.format(timestamp)
+                after_key = self.backend.scan(start=after, limit=2)[1]
+                after_data = self.backend.get(after_key)
+                after_doc = self.deserialize(after_data)
+                if after_doc['timestamp'] > timestamp:
+                    result["after"] = after_key
             except IndexError:
                 pass
             return [result,]
