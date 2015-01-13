@@ -109,10 +109,7 @@ class ArtifactBroker(GenericRecordBroker):
             "response": {
                 "type": "object",
                 "properties": {
-                    "status": {
-                        "type": "string",
-                        "pattern": "^[0-9]{3}$",
-                    },
+                    "status": { },
                 },
                 "required": [
                     "status",
