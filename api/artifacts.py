@@ -77,11 +77,18 @@ class ArtifactBroker(GenericRecordBroker):
         "properties": {
             "key": { 
                 "type": "string", 
+                "pattern": "^.+_[a-fA-F0-9]{40}_[0-9]{13}$"
             },
             "url": {
                 "type": "string", 
             },
             "timestamp": {
+                "type": "number",
+                "minimum": 1000000000000,
+                "maximum": 9999999999999,
+                "multipleOf": 1.0,
+            },
+            "imported": {
                 "type": "number",
                 "minimum": 1000000000000,
                 "maximum": 9999999999999,
@@ -103,10 +110,8 @@ class ArtifactBroker(GenericRecordBroker):
                 "type": "object",
                 "properties": {
                     "status": {
-                        "type": "number",
-                        "minimum": 100,
-                        "maximum": 999,
-                        "multipleOf": 1.0,
+                        "type": "string",
+                        "pattern": "^[0-9]{3}$",
                     },
                 },
                 "required": [
@@ -129,10 +134,19 @@ class ArtifactBroker(GenericRecordBroker):
                     },
                 },
             },
+            "features": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                },
+            },
         },
         "required": [
             "key",
             "url",
+            "request",
+            "response",
+            "imported",
             "timestamp",
         ],
     }
@@ -263,11 +277,13 @@ class ArtifactBroker(GenericRecordBroker):
         return doc, key
 
     def validate_timestamp(self, doc):
-        ts = doc.get('timestamp', int(time.time() * 1000))
+        doc['imported'] = int(time.time() * 1000)
+        ts = doc.get('timestamp', doc['imported'])
         try:
             doc['timestamp'] = int(ts)
         except:
             raise ValidationError("Parser error: '{ts}' could not interpreted as a timestamp".format(ts=ts))
+        self.add_index(doc, 'imported', str(doc['imported']))
         self.add_index(doc, 'timestamp', self.flip_timestamp(doc['timestamp']))
         self.add_index(doc, 'ts', str(doc['timestamp']))
         return doc
@@ -289,7 +305,7 @@ class ArtifactBroker(GenericRecordBroker):
             pass
 
     def strip_indices(self, doc):
-        internal_indices = ('timestamp','ts')
+        internal_indices = ('timestamp','ts','imported')
         indices = doc.get('indices')
         doc['indices'] = []
         for entry in indices:
@@ -430,6 +446,7 @@ class HbaseFlatArtifactBackend(AbstractBackend):
         row = {
             'f:url': data.get('url'),
             'f:timestamp': str(data.get('timestamp')),
+            'f:imported': str(data.get('imported')),
             'f:request.method': request.get('method'),
             'f:request.client': zlib.compress(cbor.dumps(request.get('client', {}))),
             'f:request.headers': zlib.compress(cbor.dumps(request.get('headers', {}))),
@@ -472,6 +489,12 @@ class HbaseFlatArtifactBackend(AbstractBackend):
             },
             'indices': [],
         }
+
+        try:
+            data['imported'] = int(row['f:imported'])
+        except KeyError:
+            data['imported'] = int(row['f:timestamp'])
+
         for kk, vv in row.items():
             mm = re.match(r"^f:index\.(?P<key>.*)\.[0-9]+$", kk)
             if mm is not None:
