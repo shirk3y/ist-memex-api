@@ -8,6 +8,7 @@ import jsonschema
 
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -55,6 +56,27 @@ class ArtifactItem(APIView):
         broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
         response = broker.delete(key)
         return Response(response)
+
+class ArtifactItemIndex(APIView):
+    def put(self, request, key, index, value, format=None):
+        broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
+        doc = broker.get(key)
+        broker.add_index(doc, index, value)
+        broker.save(doc, key)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    def delete(self, request, key, index, value, format=None):
+        broker = ArtifactBroker(settings.API_ARTIFACT_MANAGER_BACKEND)
+        doc = broker.get(key)
+        broker.delete(key) 
+        indices = doc.get('indices')
+        doc['indices'] = []
+        for entry in indices:
+            if entry['key'] == index and entry['value'] == value:
+                pass
+            else:
+                doc['indices'].append(entry)
+        broker.save(doc, key)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class ArtifactSearch(APIView):
     def get(self, request, index, value=None, prefix=None, start=None, end=None, adjacent=None, format=None):
