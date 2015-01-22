@@ -278,6 +278,13 @@ class ArtifactBroker(GenericRecordBroker):
         doc, key = self.validate_key(doc, key)
         doc = self.validate_timestamp(doc)
 
+        try:
+            hostname = "_".join(key.split("_")[:-2])
+            if hostname:
+                self.add_index(doc, 'hostname', hostname)
+        except:
+            pass
+
         indices = []
         for idx in doc['indices']:
             try:
