@@ -11,12 +11,14 @@ from django.utils.text import slugify
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from multiprocessing import Process
 
 import settings
 
 from models import *
 from brokers import GenericRecordBroker
 from backends import AbstractBackend
+from async import kafka_push
 
 class ArtifactList(APIView):
     def get(self, request, format=None):
@@ -40,6 +42,14 @@ class ArtifactList(APIView):
                 response.append(broker.strip_indices(broker.save(data)))
         else:
             response = broker.strip_indices(broker.save(request.DATA))
+        if settings.API_ARTIFACT_KAFKA_HOST:
+            try: 
+                key = response.get('key')
+                if key is not None:
+                    pp = Process(target=kafka_push, args=(settings.API_ARTIFACT_KAFKA_HOST, settings.API_ARTIFACT_KAFKA_TOPIC, key))
+                    pp.start()
+            except Exception:
+                pass
         return Response(response)
 
 class ArtifactItem(APIView):
