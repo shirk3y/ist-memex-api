@@ -1,6 +1,7 @@
 import sys
 import time
 import re
+import random
 import zlib
 import cbor
 import happybase
@@ -423,7 +424,8 @@ class HbaseFlatArtifactBackend(AbstractBackend):
     SERDE = False
 
     def __init__(self):
-        self.connection = happybase.Connection(host=settings.HBASE_HOST, port=int(settings.HBASE_PORT), table_prefix=settings.HBASE_TABLE_PREFIX)
+        host = random.choice(settings.HBASE_HOST.split(", "))
+        self.connection = happybase.Connection(host=host, port=int(settings.HBASE_PORT), table_prefix=settings.HBASE_TABLE_PREFIX)
         self.mirror = None
         if settings.HBASE_MIRROR_HOST is not None:
 	    try:
