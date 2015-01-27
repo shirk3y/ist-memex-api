@@ -1,0 +1,10 @@
+Django==1.7.3
+MySQL-python==1.2.5
+boto==2.35.2
+cbor==0.1.16
+djangorestframework==3.0.3
+happybase==0.9
+jsonschema==2.4.0
+-e git+https://github.com/mumrah/kafka-python.git@8ca55d6a7458c593e307879f285f6d7f53a8219b#egg=kafka_python-master
+thrift==0.9.2
+wsgiref==0.1.2
