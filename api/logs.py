@@ -448,7 +448,11 @@ class ModelLogBackend(AbstractBackend):
     def get(self, key):
         obj = Log.objects.get(key=key)
         return obj.data
-    def put(self, key, data, indices=[]):
+    def put(self, key, data, indices=None, relationships=None):
+        if indices is None:
+            indices = []
+        if relationships is None:
+            relationships = []
         obj,new = Log.objects.get_or_create(key=key)
         obj.data = data
         obj.save()
